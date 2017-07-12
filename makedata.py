@@ -5,6 +5,7 @@ import math
 import datetime
 import sys
 start=datetime.datetime.now()
+buftime=datetime.datetime.now()
 print("< - - - - - - - - - - >")
 jetset=[]
 labels=[]
@@ -15,14 +16,17 @@ dx=0
 bx=2*maxx/(2*arnum+1)
 by=2*maxy/(2*arnum+1)
 read=rt.TFile('jet2.root')
-record=mx.recordio.MXIndexedRecordIO('tmpa1.idx','tmpa1.rec','w')
+train=mx.recordio.MXRecordIO('tmpa2dd.rec','w')
+laben=mx.recordio.MXRecordIO('laba2dd.rec','w')
 jet=rt.gDirectory.Get('jetAnalyser/jetAnalyser')
 entries=jet.GetEntriesFast()
 for ent in range(entries):
     if(ent%int(entries/999)==0 and ent!=0):
-        sys.stdout.write("\r%0.2f%%\t time remain %s" % (float(100.*ent/entries),str(int((100.-100.*ent/entries)/(100.*ent/entries))*(datetime.datetime.now()-start))))
-        sys.stdout.flush()
-        #print datetime.datetime.now()
+        sys.stdout.write("\r%0.2f%%\t time remain %s\t" %
+        (float(100.*ent/entries),str(int(1000.-1000.*ent/entries)*(datetime.datetime.now()-buftime))))
+	sys.stdout.flush()
+        buftime=datetime.datetime.now()
+	#print datetime.datetime.now()
     #if ent>1000:
     #    break
     jet.GetEntry(ent)
@@ -35,8 +39,6 @@ for ent in range(entries):
     r=0
     g=0
     b=0
-    for i in range(10000):
-        pass
     for i in range(len(jet.dau_pt)):
         x=int(math.floor((jet.dau_deta[i]/bx)+0.5)+arnum)
         if x<0 or x>2*arnum:
@@ -74,25 +76,30 @@ for ent in range(entries):
                 ddd.append([i,j,1,int(palet[1][i][j])])
             if palet[2][i][j]!=0:
                 ddd.append([i,j,2,int(palet[2][i][j])])
-
+    
     jetset.append(ddd)
-    if (ent%1000==0):
-        #jetset=np.array(jetset,dtype=np.uint8)
-        for l in range(len(jetset)):
-            #record.write_idx(dx,str(jetset[l].tolist()))
-            record.write_idx(dx,str(jetset[l]))
-            dx+=1
-        jetset=[]
     if jet.partonId==21:
         labels.append(1)
     else:
         labels.append(0)
+    if (ent%1000==0):
+        #jetset=np.array(jetset,dtype=np.uint8)
+        for l in range(len(jetset)):
+            #record.write_idx(dx,str(jetset[l].tolist()))
+            train.write(str(jetset[l]))
+            dx+=1
+        for m in range(len(labels)):
+            laben.write(str(labels[l]))
+        labels=[]
+        jetset=[]
 [r,g,b]=[0,0,0]
 [gr,gg,gb]=[0,0,0]
 [qr,qg,qb]=[0,0,0]
-
-record.close()
-labels=np.array(labels)
+                
+train.close()
+laben.close()
+#labels=np.array(labels)
 #jetset=np.array(jetset,dtype=np.uint8)
-data=jetset.reshape((len(jetset),3*33*33))
+#data=jetset.reshape((len(jetset),3*33*33))
+print("<>")
 print(datetime.datetime.now()-start)
