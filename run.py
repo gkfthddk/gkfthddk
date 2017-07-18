@@ -4,8 +4,8 @@ import random
 from sklearn.model_selection import train_test_split
 #from sklearn.metrics import roc_auc_score, auc, precision_recall_curve, roc_curve, average_precision_score
 
-train_iter =rootiter('../jet2.root',['data'],['softmax_label'],batch_size=100,begin=0,end=0.7)
-test_iter =rootiter('../jet2.root',['data'],['softmax_label'],batch_size=100,begin=0.7,end=1)
+train_iter =rootiter('../jet1.root',['data'],['softmax_label'],batch_size=100,begin=0,end=0.7)
+test_iter =rootiter('../jet1.root',['data'],['softmax_label'],batch_size=100,begin=0.7,end=1)
 # __init__(self,data_path,data_names,label_names,batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4)
 
 #data_train=data1[:int(len(data1)*0.7)]
@@ -75,5 +75,5 @@ lenet_model.fit(train_iter,
                 optimizer='sgd',
                 optimizer_params={'learning_rate':0.1},
                 eval_metric='acc',
-                batch_end_callback = mx.callback.Speedometer(100, 100),
-                num_epoch=20)
+                batch_end_callback = mx.callback.Speedometer(100, 1000),
+                num_epoch=10)

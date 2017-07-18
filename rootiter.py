@@ -29,7 +29,7 @@ class rootiter(mx.io.DataIter):
         return self
 
     def reset(self):
-        self.jet.GetEntry(0)
+        self.jet.GetEntry(self.Begin)
         self.ent=self.Begin
         self.endfile = 0
 
