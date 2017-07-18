@@ -48,6 +48,8 @@ class rootiter(mx.io.DataIter):
         self.file.Close()
     def printr(self):
         print self.ent,self.jet.pt
+    def samplenum(self):
+        return self.Entries
     def next(self):
         if self.endfile==0:
             maxx=self.maxx
@@ -102,7 +104,7 @@ class rootiter(mx.io.DataIter):
                     labels.append(0)
                 self.ent+=1
                 if(self.endcut==0 and self.ent>=self.End):
-                    self.ent=0
+                    self.ent=self.Begin
                     self.endfile=1
             if(self.endcut==1 and int(self.End/self.batch_size)<=int(self.ent/self.batch_size)):
                 self.endfile=1
