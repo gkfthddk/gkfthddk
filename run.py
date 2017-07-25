@@ -1,13 +1,16 @@
 from rootiter import *
 import mxnet as mx
 import random
+import datetime
 from sklearn.model_selection import train_test_split
 #from sklearn.metrics import roc_auc_score, auc, precision_recall_curve, roc_curve, average_precision_score
-
-train_iter =rootiter('../jet1.root',['data'],['softmax_label'],batch_size=100,begin=0,end=0.7)
-test_iter =rootiter('../jet1.root',['data'],['softmax_label'],batch_size=100,begin=0.7,end=1)
+start=datetime.datetime.now()
+batch_num=1000
+train_iter =rootiter('../jet1.root',['data'],['softmax_label'],batch_size=batch_num,begin=0,end=0.7)
+test_iter =rootiter('../jet1.root',['data'],['softmax_label'],batch_size=batch_num,begin=0.7,end=1)
 # __init__(self,data_path,data_names,label_names,batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4)
-
+#for batch in train_iter:
+#    pass
 #data_train=data1[:int(len(data1)*0.7)]
 #data_test=data1[int(len(data1)*0.7):]
 #label_train=labels[:int(len(labels)*0.7)]
@@ -69,11 +72,17 @@ batch_end_callback = mx.callback.Speedometer(batch_size, 1000),
 optimizer_params={'learning_rate':0.1},
 """
 #optimizer_params={'learning_rate':0.5,'beta1':0.1,'beta2':0.111},
+#batch_end_callback = [mx.callback.Speedometer(100, 1000),mx.callback.ProgressBar],
+#optimizer_params={'learning_rate':0.1},
 print train_iter.samplenum(),"samples"
 lenet_model.fit(train_iter,
                 eval_data=test_iter,
-                optimizer='sgd',
-                optimizer_params={'learning_rate':0.1},
+                optimizer='adam',
                 eval_metric='acc',
-                batch_end_callback = mx.callback.Speedometer(100, 1000),
+                batch_end_callback =
+                [mx.callback.ProgressBar(train_iter.totalnum()),mx.callback.Speedometer(batch_num,train_iter.totalnum())],
+                epoch_end_callback=mx.callback.do_checkpoint('save/jetcheck_0725'),
                 num_epoch=10)
+lenet_model.save_checkpoint(prefix='jet1_2',epoch=10)
+
+print datetime.datetime.now()-start

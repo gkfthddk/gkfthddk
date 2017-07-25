@@ -50,6 +50,8 @@ class rootiter(mx.io.DataIter):
         print self.ent,self.jet.pt
     def samplenum(self):
         return self.Entries
+    def totalnum(self):
+        return int(self.End/self.batch_size)
     def next(self):
         if self.endfile==0:
             maxx=self.maxx
