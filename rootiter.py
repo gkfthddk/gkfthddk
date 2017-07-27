@@ -51,9 +51,9 @@ class rootiter(mx.io.DataIter):
     def sampleallnum(self):
         return self.Entries
     def trainnum(self):
-        return self.End
+        return self.End-self.Begin
     def totalnum(self):
-        return int(self.End/self.batch_size)
+        return int((self.End-self.Begin)/self.batch_size)
     def next(self):
         if self.endfile==0:
             maxx=self.maxx
@@ -110,7 +110,7 @@ class rootiter(mx.io.DataIter):
                 if(self.endcut==0 and self.ent>=self.End):
                     self.ent=self.Begin
                     self.endfile=1
-            if(self.endcut==1 and int((self.End-self.Begin)/self.batch_size)<=int(self.ent/self.batch_size)):
+            if(self.endcut==1 and int((self.End-self.Begin)/self.batch_size)<=int((self.ent-self.Begin)/self.batch_size)):
                 self.endfile=1
 
             data=[mx.nd.array(jetset)]
