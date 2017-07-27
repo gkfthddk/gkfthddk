@@ -67,7 +67,10 @@ class ptiter(mx.io.DataIter):
             arnum=self.arnum
             jetset=[]
             labels=[]
-            while True:
+            for i in range(self.batch_size):
+                if(self.ent==len(self.ptindx)):
+                    print len(self.ptindx), self.ent, self.End, self.Begin,self.Entries,self.endcut,i
+                    break
                 self.jet.GetEntry(self.ptindx[self.ent])
                 jetset.append(np.array(self.im).reshape((3,2*arnum+1,2*arnum+1)))
                 labels.append(self.label[0])
@@ -75,9 +78,7 @@ class ptiter(mx.io.DataIter):
                 if(self.endcut==0 and self.ent>=self.End):
                     self.ent=self.Begin
                     self.endfile=1
-                if(len(labels)==self.batch_size):
-                    break
-            if(self.endcut==1 and int(self.End/self.batch_size)<=int(self.ent/self.batch_size)):
+            if(self.endcut==1 and int((self.End-self.Begin)/self.batch_size)<=int(self.ent/self.batch_size)):
                 self.endfile=1
 
             data=[mx.nd.array(jetset)]
