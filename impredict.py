@@ -1,13 +1,14 @@
 from imiter import *
 from rootiter import *
 import mxnet as mx
+import numpy as np
 import random
 import datetime
 from sklearn.model_selection import train_test_split
 #from sklearn.metrics import roc_auc_score, auc, precision_recall_curve, roc_curve, average_precision_score
 start=datetime.datetime.now()
 
-batch_num=1000
+batch_num=10000
 train_iter=imiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=0,end=0.051757)
 test_iter=imiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=0.051757,end=0.073678)
 
@@ -72,16 +73,34 @@ mod.set_params(arg_params,aux_params)
 
 q=[]
 g=[]
+x=[]
+y=[]
 ent=0
-entries=1000*100
+qgauc=0
+xya=0
+groc=[]
+qroc=[]
+qm=0
+gm=0
+entries=2-1
 start=datetime.datetime.now()
 buftime=datetime.datetime.now()
-print " f"
-for j in range(100):
+print test_iter.totalnum(),entries
+
+from sklearn.metrics import roc_auc_score, auc,precision_recall_curve,roc_curve,average_precision_score
+
+for i in range(100):
+    x.append(i/100.)
+    y.append(1.-i/100.)
+    groc.append(0)
+    qroc.append(0)
+if(entries==-1):
+    entries=test_iter.totalnum()
+for j in range(entries):
     a=test_iter.next()
     mod.forward(a)
     b=mod.get_outputs()[0].asnumpy()[:,1]
-    for i in range(1000):
+    for i in range(batch_num):
         #sys.stdout.write("\r%0.2f"%
         #                (float(100.*ent/entries)))
         #sys.stdout.flush()
@@ -89,11 +108,33 @@ for j in range(100):
         #ent+=1
         if (a.label[0].asnumpy()[i]==1):
             g.append(b[i])
+            groc[int(b[i]*100)]+=1.
         else:
             q.append(b[i])
+            qroc[int(b[i]*100)]+=1.
+t_fpr,t_tpr, _ = roc_curve(a.label[0].asnumpy(),b)
+t_fnr = 1-t_fpr
+train_auc=np.around(auc(t_fpr,t_tpr),4)
+"""for i in range(1,100):
+    groc[i]+=groc[i-1]
+    qroc[i]+=qroc[i-1]
+for i in range(0,100):
+    groc[i]=1-groc[i]/groc[99]
+    qroc[i]=qroc[i]/qroc[99]
+    qgauc+=qroc[i]/100.
+    xya+=y[i]/100.
+like=plt.figure(1)
 plt.hist(q,bins=30,alpha=0.5,label='quark')
 plt.hist(g,bins=30,alpha=0.5,label='gluon')
 plt.legend(loc="upper center")
 plt.savefig('likelyhood')
+roc=plt.figure(2)"""
+#plt.plot(groc,qroc,label=str(auc))
+#plt.plot(x,y,label=str(xya))
+#plt.legend(loc="lower left")
+#plt.plot(qroc)
+plt.plot(t_tpr,t_fnr,alpha=0.6,c="m",label="Training AUC = {}".format(train_auc),lw=2)
+plt.legend(loc='lower left')
+plt.savefig('rocsc')
 
 print datetime.datetime.now()-start
