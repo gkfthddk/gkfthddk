@@ -3,15 +3,36 @@ from rootiter import *
 import mxnet as mx
 import random
 import datetime
+import argparse
+import sys
 from sklearn.model_selection import train_test_split
 #from sklearn.metrics import roc_auc_score, auc, precision_recall_curve, roc_curve, average_precision_score
+parser=argparse.ArgumentParser()
+parser.add_argument("--batch_size",type=int,default=100,help='the number of batch size')
+parser.add_argument("--num_epochs",type=int,default=10,help='the number of total epochs')
+parser.add_argument("--gpus",default="1",help='the ports of gpus')
+parser.add_argument("--begin",type=float,default=0.,help='begin of training must begin<end')
+parser.add_argument("--end",type=float,default=1.,help='end of training must begin<end')
+parser.add_argument("--optimizer",default="adagrad",help='the optimizer at fitting')
+parser.add_argument("--network",default="vgg",help='the network at fitting')
+
+args=parser.parse_args()
+print args
+if(args.begin<0. or args.end>1. or args.begin>=args.end):
+    print "must be 0 <= begin < end <= 1"
+    print args.begin,args.end
+    sys.exit(1)
+else:
+    _beg=args.begin
+    _end=args.end
+    _mid=(_end-_beg)*5/7+_beg
 start=datetime.datetime.now()
 
 # train_iter =rootiter('/home/gkfthddk/tutorials/gkfthddk/../jet1.root',['data'],['softmax_label'],batch_size=1000,begin=0,end=0.01)
 # test_iter =rootiter('/home/gkfthddk/tutorials/gkfthddk/../jet1.root',['data'],['softmax_label'],batch_size=1000,begin=0.01,end=0.012)
-batch_num=1000
-train_iter=imiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=0,end=0.051757)
-test_iter=imiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=0.051757,end=0.073678)
+batch_num=args.batch_size
+train_iter=imiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=_beg,end=_mid)
+test_iter=imiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end)
 
 
 # __init__(self,data_path,data_names,label_names,batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4)
@@ -62,7 +83,7 @@ fc2 = mx.symbol.FullyConnected(data=drop1, num_hidden=4096)
 relu10 = mx.sym.Activation(data=fc2, act_type="relu")
 drop2=mx.sym.Dropout(data=relu10)
 fc3 = mx.symbol.FullyConnected(data=drop2, num_hidden=2)
-vggnet=mx.sym.SoftmaxOutput(data=fc3, name='softmax')
+vgg=mx.sym.SoftmaxOutput(data=fc3, name='softmax')
 #mx.viz.plot_network(vggnet,shape={"data":(1,3,33,33)})
 print "vgg"
 
@@ -71,7 +92,14 @@ print "vgg"
 import logging
 logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 # create a trainable module on GPU 0
-lenet_model = mx.mod.Module(symbol=vggnet, context=mx.gpu(1))
+cxt=[]
+for i in args.gpus.split(","):
+    cxt.append(mx.gpu(eval(i)))
+print args.network
+if("vgg"==args.network):
+    print("true")
+lenet_model = mx.mod.Module(symbol=eval(args.network), context=[mx.gpu(0)])
+print "gpu pass"
 # train with the same 
 """
 batch_end_callback = mx.callback.Speedometer(batch_size, 1000),
@@ -80,15 +108,15 @@ optimizer_params={'learning_rate':0.1},
 #optimizer_params={'learning_rate':0.5,'beta1':0.1,'beta2':0.111},
 #batch_end_callback = [mx.callback.Speedometer(100, 1000),mx.callback.ProgressBar],
 #optimizer_params={'learning_rate':0.1},
-print train_iter.trainnum(),"samples"
+print train_iter.trainnum(),"batches"
 lenet_model.fit(train_iter,
                 eval_data=test_iter,
-                optimizer='adagrad',
+                optimizer=args.optimizer,
                 eval_metric='acc',
                 batch_end_callback = 
                 [mx.callback.ProgressBar(train_iter.totalnum()),mx.callback.Speedometer(batch_num,train_iter.totalnum()-1)],
-                epoch_end_callback=mx.callback.do_checkpoint('save/jeticheck_0727'),
-                num_epoch=10)
+                epoch_end_callback=mx.callback.do_checkpoint('save/jeticheck_'+str(start.date())),
+                num_epoch=args.num_epochs)
 #lenet_model.save_checkpoint(prefix='jeti1_1',epoch=10)
 
 print datetime.datetime.now()-start
