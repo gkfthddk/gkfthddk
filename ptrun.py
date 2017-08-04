@@ -13,9 +13,10 @@ parser.add_argument("--network",default="vgg",help='the network at fitting')
 parser.add_argument("--optimizer",default="adagrad",help='the optimizer at fitting')
 parser.add_argument("--num_epochs",type=int,default=10,help='the number of total epochs')
 parser.add_argument("--batch_size",type=int,default=100,help='the number of batch size')
-parser.add_argument("--pt",type=int,default=5,help='the bin number of pt 0~19')
+parser.add_argument("--pt",default="range(0,1)",help='the bin number of pt 0~19')
 parser.add_argument("--begin",type=float,default=0.,help='begin of training must begin<end')
 parser.add_argument("--end",type=float,default=1.,help='end of training must begin<end')
+parser.add_argument("--slicear",type=float,default=1.,help='slice of array<end')
 parser.add_argument("--gpus",default="0",help='the ports of gpus')
 args=parser.parse_args()
 print args
@@ -30,14 +31,11 @@ else:
 
 batch_num=args.batch_size
 ptb=args.pt
-if(ptb>=20):
-    print "must be 0 <= pt < 20"
-    sys.exit(1)
 
 start=datetime.datetime.now()
 
-train_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=_beg,end=_mid,ptbin=ptb)
-test_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end,ptbin=ptb)
+train_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=_beg,end=_mid,ptbin=ptb,sli=args.slicear)
+test_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end,ptbin=ptb,sli=args.slicear)
 
 data = mx.sym.var('data')
 # first conv layer

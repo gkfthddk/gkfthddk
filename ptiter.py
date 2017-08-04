@@ -8,13 +8,19 @@ import datetime
 import warnings
 import ROOT as rt
 import math
+import random
 from array import array
 
 class ptiter(mx.io.DataIter):
-    def __init__(self,data_path,data_names,label_names,batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4,ptbin=3):
+    def __init__(self,data_path,data_names,label_names,batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4,ptbin="range(3,4)",sli=1):
         self.file=rt.TFile(data_path,'read')
         ptread=open('ptjet.txt','r')
-        self.ptindx=eval(ptread.readlines()[ptbin])
+        readset=ptread.readlines()
+        self.ptindx=[]
+        for i in eval(ptbin):
+            aset=eval(readset[i])
+            self.ptindx=self.ptindx+aset[:int(len(aset)*sli)]
+        self.ptindx.sort()
         ptread.close()
         self.jet=self.file.Get("image")
         self.im = array('b', [0]*(3*(arnum*2+1)*(arnum*2+1)))
