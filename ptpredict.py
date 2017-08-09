@@ -8,17 +8,19 @@ import datetime
 import argparse
 from sklearn.model_selection import train_test_split
 #from sklearn.metrics import roc_auc_score, auc, precision_recall_curve, roc_curve, average_precision_score
+#python ptpredict --range "(0,1)" --date "2017-08-04"
 parser=argparse.ArgumentParser()
 parser.add_argument("--ran",default="range(0,1)",help='model range name')
-parser.add_argument("--date",default="2017-08-03",help='model date name')
+parser.add_argument("--date",default="2017-08-04",help='model date name')
+parser.add_argument("--gpus",default="0",help='the ports of gpus')
 
 args=parser.parse_args()
 print args
 
 start=datetime.datetime.now()
 
-batch_num=1000
-entries=101-1
+batch_num=100
+entries=2-1
 ptb="range(0,1)"
 #ptb="range(1,21)"
 train_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=0,end=5./7.,ptbin=args.ran,sli=0.5)
@@ -77,13 +79,19 @@ print "vgg"
 import logging
 logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 # create a trainable module on GPU 0
-lenet_model = mx.mod.Module(symbol=vggnet, context=mx.gpu(1))
+#lenet_model = mx.mod.Module(symbol=vggnet, context=mx.gpu(1))
 # train with the same 
-mod=mx.mod.Module(symbol=sym,context=[mx.gpu(1)])
+cxt=[]
+for i in args.gpus.split(","):
+    cxt.append(mx.gpu(eval(i)))
+mod=mx.mod.Module(symbol=sym,context=cxt)
+print "mod"
 mod.bind(data_shapes=test_iter.provide_data,label_shapes=test_iter.provide_label)
+print "bind"
 mod.init_params()
+print "init"
 mod.set_params(arg_params,aux_params)
-
+print "loaded"
 q=[]
 g=[]
 x=[]
@@ -141,13 +149,13 @@ plt.hist(g,bins=30,alpha=0.5,label='gluon')
 plt.legend(loc="upper center")
 plt.savefig(str('likelyhoodp'+args.ran))
 
-roc=plt.figure(2)
+#roc=plt.figure(2)
 #plt.plot(groc,qroc,label=str(auc))
 #plt.plot(x,y,label=str(xya))
 #plt.legend(loc="lower left")
 #plt.plot(qroc)
-plt.plot(t_tpr,t_fnr,alpha=0.6,c="m",label="Training AUC = {}".format(train_auc),lw=2)
-plt.legend(loc='lower left'+args.ran)
-plt.savefig('rocscp')
+"""plt.plot(t_tpr,t_fnr,alpha=0.6,c="m",label="Training AUC = {}".format(train_auc),lw=2)
+plt.legend(loc='lower left')
+plt.savefig('rocscp'+args.ran)"""
 print train_auc
 print datetime.datetime.now()-start
