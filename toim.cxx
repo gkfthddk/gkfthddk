@@ -14,14 +14,19 @@ int main() {
   const float maxx=0.4;
   const float maxy=0.4;
 
-  auto rf = new TFile("/home/gkfthddk/tutorials/gkfthddk/../jetall.root");
+  auto rf = new TFile("../jet_pythia_100.root");
   auto jet = (TTree*) rf->Get("jetAnalyser/jetAnalyser");
   int batch_size = -1;
 
   int partonId;
   jet->SetBranchAddress("partonId", &partonId);
-  float pt;
+  float pt,eta;
+  int nJets,nMatchedJets,nGenJets;
   jet->SetBranchAddress("pt",&pt);
+  jet->SetBranchAddress("eta",&eta);
+  jet->SetBranchAddress("nJets",&nJets);
+  jet->SetBranchAddress("nMatchedJets",&nMatchedJets);
+  jet->SetBranchAddress("nGenJets",&nGenJets);
   std::vector<float> *dau_pt = 0;
   jet->SetBranchAddress("dau_pt", &dau_pt);
   std::vector<float> *dau_deta = 0;
@@ -31,7 +36,7 @@ int main() {
   std::vector<int> *dau_charge = 0;
   jet->SetBranchAddress("dau_charge", &dau_charge);
 
-  auto outf = new TFile("jetimg.root", "recreate");
+  auto outf = new TFile("jetimgnum.root", "recreate");
   auto t = new TTree("image", "image");
   t->SetDirectory(outf);
   const int ch_size = (2*arnum+1)*(2*arnum+1);
@@ -41,7 +46,11 @@ int main() {
   unsigned char label;
   t->Branch("image", arr, (std::string("image[") + std::to_string(img_size) + "]/b").c_str());
   t->Branch("label", &label, "label/b");
+  t->Branch("nJets", &nJets, "MatchedJets/I");
+  t->Branch("nMatchedJets", &nMatchedJets, "nMatchedJets/I");
+  t->Branch("nGenJets", &nGenJets, "GenJets/I");
   t->Branch("pt", &pt, "pt/F");
+  t->Branch("eta", &pt, "eta/F");
 
 
   double bx=2*maxx/(2*arnum+1);
@@ -69,13 +78,13 @@ int main() {
       int y = std::floor(((dau_dphi->at(j)/by)+0.5)+arnum);
       if ((y < 0) or (y > (2*arnum)))
 	continue;
-      double pt = dau_pt->at(j);
+      double dpt = dau_pt->at(j);
       if (dau_charge->at(j) == 0) {
-	palet[1][x][y] += pt;
+	palet[1][x][y] += dpt;
 	if (palet[1][x][y] > g)
 	  g = palet[1][x][y];
       } else {
-	palet[0][x][y] += pt;
+	palet[0][x][y] += dpt;
 	palet[2][x][y] += 1;
 	if (palet[0][x][y]>r)
 	  r=palet[0][x][y];
