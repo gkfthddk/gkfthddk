@@ -8,6 +8,7 @@ import argparse
 import sys
 from sklearn.model_selection import train_test_split
 #from sklearn.metrics import roc_auc_score, auc, precision_recall_curve, roc_curve, average_precision_score
+#python ptrun --network vgg --optimizer adagrad --num_epochs 10 --batch_sze 1000 --pt "range(0,1)"
 parser=argparse.ArgumentParser()
 parser.add_argument("--network",default="vgg",help='the network at fitting')
 parser.add_argument("--optimizer",default="adagrad",help='the optimizer at fitting')
@@ -16,7 +17,7 @@ parser.add_argument("--batch_size",type=int,default=100,help='the number of batc
 parser.add_argument("--pt",default="range(0,1)",help='the bin number of pt 0~19')
 parser.add_argument("--begin",type=float,default=0.,help='begin of training must begin<end')
 parser.add_argument("--end",type=float,default=1.,help='end of training must begin<end')
-parser.add_argument("--slicear",type=float,default=1.,help='slice of array<end')
+parser.add_argument("--slicear",type=float,default=1.,help='slice of array for smaller training')
 parser.add_argument("--gpus",default="0",help='the ports of gpus')
 args=parser.parse_args()
 print args
@@ -90,7 +91,7 @@ cxt=[]
 for i in args.gpus.split(","):
     cxt.append(mx.gpu(eval(i)))
 print args.network
-lenet_model = mx.mod.Module(symbol=eval(args.network), context=[mx.gpu(0)])
+lenet_model = mx.mod.Module(symbol=eval(args.network), context=cxt)
 
 print train_iter.trainnum(),"batchs"
 lenet_model.fit(train_iter,
