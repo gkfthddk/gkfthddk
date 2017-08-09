@@ -5,16 +5,28 @@ import mxnet as mx
 import numpy as np
 import random
 import datetime
+import argparse
 from sklearn.model_selection import train_test_split
 #from sklearn.metrics import roc_auc_score, auc, precision_recall_curve, roc_curve, average_precision_score
+parser=argparse.ArgumentParser()
+parser.add_argument("--ran",default="range(0,1)",help='model range name')
+parser.add_argument("--date",default="2017-08-03",help='model date name')
+
+args=parser.parse_args()
+print args
+
 start=datetime.datetime.now()
 
 batch_num=1000
-ptb=3
-train_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=0,end=0.7,ptbin=ptb)
-test_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=0.7,end=1.,ptbin=ptb)
+entries=101-1
+ptb="range(0,1)"
+#ptb="range(1,21)"
+train_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=0,end=5./7.,ptbin=args.ran,sli=0.5)
+test_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=5./7.,end=1.,ptbin=args.ran,sli=0.5)
+#sli=0.3
 
-
+sym,arg_params,aux_params=mx.model.load_checkpoint("save/jetpcheck_"+args.ran+"_"+args.date,6)
+#sym,arg_params,aux_params=mx.model.load_checkpoint("save/jetpcheck_range(1,21)_2017-08-03",7)
 
 data = mx.sym.var('data')
 # first conv layer
@@ -67,8 +79,7 @@ logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 # create a trainable module on GPU 0
 lenet_model = mx.mod.Module(symbol=vggnet, context=mx.gpu(1))
 # train with the same 
-sym,arg_params,aux_params=mx.model.load_checkpoint("save/jetpcheck_0727",5)
-mod=mx.mod.Module(symbol=sym,context=[mx.gpu(0)])
+mod=mx.mod.Module(symbol=sym,context=[mx.gpu(1)])
 mod.bind(data_shapes=test_iter.provide_data,label_shapes=test_iter.provide_label)
 mod.init_params()
 mod.set_params(arg_params,aux_params)
@@ -84,7 +95,6 @@ groc=[]
 qroc=[]
 qm=0
 gm=0
-entries=2-1
 start=datetime.datetime.now()
 buftime=datetime.datetime.now()
 print test_iter.totalnum(),entries
@@ -129,14 +139,15 @@ like=plt.figure(1)
 plt.hist(q,bins=30,alpha=0.5,label='quark')
 plt.hist(g,bins=30,alpha=0.5,label='gluon')
 plt.legend(loc="upper center")
-plt.savefig('likelyhoodp')
+plt.savefig(str('likelyhoodp'+args.ran))
+
 roc=plt.figure(2)
 #plt.plot(groc,qroc,label=str(auc))
 #plt.plot(x,y,label=str(xya))
 #plt.legend(loc="lower left")
 #plt.plot(qroc)
 plt.plot(t_tpr,t_fnr,alpha=0.6,c="m",label="Training AUC = {}".format(train_auc),lw=2)
-plt.legend(loc='lower left')
+plt.legend(loc='lower left'+args.ran)
 plt.savefig('rocscp')
 print train_auc
 print datetime.datetime.now()-start
