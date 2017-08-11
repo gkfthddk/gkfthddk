@@ -7,14 +7,15 @@ import datetime
 import argparse
 import sys
 from sklearn.model_selection import train_test_split
+from importlib import import_module
 #from sklearn.metrics import roc_auc_score, auc, precision_recall_curve, roc_curve, average_precision_score
 #python ptrun --network vgg --optimizer adagrad --num_epochs 10 --batch_sze 1000 --pt "range(0,1)"
 parser=argparse.ArgumentParser()
-parser.add_argument("--network",default="vgg",help='the network at fitting')
+parser.add_argument("--network",default="vgg",help='the name of cnn architecture')
 parser.add_argument("--optimizer",default="adagrad",help='the optimizer at fitting')
 parser.add_argument("--num_epochs",type=int,default=10,help='the number of total epochs')
 parser.add_argument("--batch_size",type=int,default=100,help='the number of batch size')
-parser.add_argument("--pt",default="range(0,1)",help='the bin number of pt 0~19')
+parser.add_argument("--pt",default="range(0,1)",help='the bin number of pt range(0,21)')
 parser.add_argument("--begin",type=float,default=0.,help='begin of training must begin<end')
 parser.add_argument("--end",type=float,default=1.,help='end of training must begin<end')
 parser.add_argument("--slicear",type=float,default=1.,help='slice of array for smaller training')
@@ -38,25 +39,9 @@ start=datetime.datetime.now()
 train_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=_beg,end=_mid,ptbin=ptb,sli=args.slicear)
 test_iter=ptiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end,ptbin=ptb,sli=args.slicear)
 
-data = mx.sym.var('data')
-# first conv layer
-conv1 = mx.sym.Convolution(data=data, kernel=(5,5), num_filter=20)
-tanh1 = mx.sym.Activation(data=conv1, act_type="relu")
-pool1 = mx.sym.Pooling(data=tanh1, pool_type="max", kernel=(2,2), stride=(2,2))
-# second conv layer
-conv2 = mx.sym.Convolution(data=pool1, kernel=(5,5), num_filter=50)
-tanh2 = mx.sym.Activation(data=conv2, act_type="relu")
-pool2 = mx.sym.Pooling(data=tanh2, pool_type="max", kernel=(2,2), stride=(2,2))
-# first fullc layer
-flatten = mx.sym.flatten(data=pool2)
-fc1 = mx.symbol.FullyConnected(data=flatten, num_hidden=500)
-tanh3 = mx.sym.Activation(data=fc1, act_type="relu")
-# second fullc
-fc2 = mx.sym.FullyConnected(data=tanh3, num_hidden=2)
-# softmax loss
-lenet = mx.sym.SoftmaxOutput(data=fc2, name='softmax')
-#mx.viz.plot_network(lenet)
+net = import_module('symbols.'+args.network)
 
+sym=net.get_symbol(2)
 
 data=mx.sym.var('data')
 conv1 = mx.sym.Convolution(data=data, kernel=(3,3),pad=(1,1), num_filter=64)
@@ -91,7 +76,7 @@ cxt=[]
 for i in args.gpus.split(","):
     cxt.append(mx.gpu(eval(i)))
 print args.network
-lenet_model = mx.mod.Module(symbol=eval(args.network), context=cxt)
+lenet_model = mx.mod.Module(symbol=sym, context=cxt)
 
 print train_iter.trainnum(),"batchs"
 lenet_model.fit(train_iter,
