@@ -51,7 +51,7 @@ import logging
 logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 # create a trainable module on GPU 0
 print args.network
-model = mx.mod.Module(symbol=getsym(args.network,2), context=getctx(args.gpus))
+model = mx.mod.Module(symbol=getsym(args.network,2), context=getctx(args.gpus,args.cpus))
 
 print train_iter.trainnum(),"batchs"
 model.fit(train_iter,

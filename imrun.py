@@ -13,6 +13,7 @@ parser=argparse.ArgumentParser()
 parser.add_argument("--batch_size",type=int,default=100,help='the number of batch size')
 parser.add_argument("--num_epochs",type=int,default=10,help='the number of total epochs')
 parser.add_argument("--gpus",default=None,help='the ports of gpus')
+parser.add_argument("--cpus",default=None,help='the ports of cpus')
 parser.add_argument("--begin",type=float,default=0.,help='begin of training must begin<end')
 parser.add_argument("--end",type=float,default=1.,help='end of training must begin<end')
 parser.add_argument("--optimizer",default="adagrad",help='the optimizer at fitting')
@@ -48,7 +49,7 @@ logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 print args.network
 if("vgg"==args.network):
     print("true")
-model = mx.mod.Module(symbol=getsym(args.network,2), context=getctx(args.gpus))
+model = mx.mod.Module(symbol=getsym(args.network,2), context=getctx(args.gpus,args.cpus))
 print "gpu pass"
 # train with the same 
 """
