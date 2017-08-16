@@ -5,19 +5,37 @@ import random
 import datetime
 import argparse
 import sys
-from common import *
+from common import fit,data
 from sklearn.model_selection import train_test_split
 from importlib import import_module
 #from sklearn.metrics import roc_auc_score, auc, precision_recall_curve, roc_curve, average_precision_score
 parser=argparse.ArgumentParser()
-parser.add_argument("--batch_size",type=int,default=100,help='the number of batch size')
-parser.add_argument("--num_epochs",type=int,default=10,help='the number of total epochs')
-parser.add_argument("--gpus",default=None,help='the ports of gpus')
-parser.add_argument("--cpus",default=None,help='the ports of cpus')
+#parser.add_argument("--batch_size",type=int,default=100,help='the number of batch size')
+#parser.add_argument("--num_epochs",type=int,default=10,help='the number of total epochs')
+#parser.add_argument("--gpus",default=None,help='the ports of gpus')
+#parser.add_argument("--cpus",default=None,help='the ports of cpus')
 parser.add_argument("--begin",type=float,default=0.,help='begin of training must begin<end')
 parser.add_argument("--end",type=float,default=1.,help='end of training must begin<end')
-parser.add_argument("--optimizer",default="adagrad",help='the optimizer at fitting')
-parser.add_argument("--network",default="vgg",help='the network at fitting')
+#parser.add_argument("--optimizer",default="adagrad",help='the optimizer at fitting')
+#parser.add_argument("--network",default="vgg",help='the network at fitting')
+fit.add_fit_args(parser)
+data.add_data_args(parser)
+
+
+parser.set_defaults(
+    network = 'vgg',
+    gpus=None,
+    num_layers = 18,
+    num_classes = 2,
+    image_shape = '3,33,33',
+    pad_size=4,
+    batch_size =100,
+    disp_batched =99,
+    num_epochs =20,
+    lr = .05,
+    lr_step_epochs='10',
+)
+
 
 args=parser.parse_args()
 print args
@@ -38,7 +56,7 @@ train_iter=imiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=b
 test_iter=imiter('../jetsome-test.root',['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end)
 
 net=import_module('symbols.'+args.network)
-sym=net.get_symbol(2)
+sym=net.get_symbol(**vars(args))
 
 print "vgg"
 
@@ -49,7 +67,8 @@ logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 print args.network
 if("vgg"==args.network):
     print("true")
-model = mx.mod.Module(symbol=getsym(args.network,2), context=getctx(args.gpus,args.cpus))
+model = mx.mod.Module(symbol=sym, context=fit.getctx(args.gpus))
+#model=fit.getmodel(args,sym)
 print "gpu pass"
 # train with the same 
 """
@@ -66,7 +85,7 @@ model.fit(train_iter,
                 eval_metric='acc',
                 batch_end_callback = 
                 [mx.callback.ProgressBar(train_iter.totalnum()),mx.callback.Speedometer(batch_num,train_iter.totalnum()-1)],
-                epoch_end_callback=mx.callback.do_checkpoint('save/jeticheck_'+str(start.date())),
+                epoch_end_callback=mx.callback.do_checkpoint('save/jeticheck_'+args.network+'_'+str(start.date())),
                 num_epoch=args.num_epochs)
 #lenet_model.save_checkpoint(prefix='jeti1_1',epoch=10)
 
