@@ -12,6 +12,8 @@ from array import array
 
 class imiter(mx.io.DataIter):
     def __init__(self,data_path,data_names,label_names,batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4):
+        if(batch_size<100):
+            print("batch_size is small it might cause error")
         self.file=rt.TFile(data_path,'read')
         self.jet=self.file.Get("image")
         self.im = array('b', [0]*(3*(arnum*2+1)*(arnum*2+1)))
@@ -64,12 +66,26 @@ class imiter(mx.io.DataIter):
             arnum=self.arnum
             jetset=[]
             labels=[]
-            for i in range(self.batch_size):
+            """for i in range(self.batch_size):
                 self.jet.GetEntry(self.ent)
                 jetset.append(np.array(self.im).reshape((3,2*arnum+1,2*arnum+1)))
                 labels.append(self.label[0])
                 self.ent+=1
                 if(self.endcut==0 and self.ent>=self.End):
+                    self.ent=self.Begin
+                    self.endfile=1"""
+            while True:
+                self.jet.GetEntry(self.ent)
+                self.ent+=1
+                if(self.jet.pt<100):
+                    pass
+                else:
+                    jetset.append(np.array(self.im).reshape((3,2*arnum+1,2*arnum+1)))
+                    labels.append(self.label[0])
+                if(len(labels)>=self.batch_size):
+                    break
+                #if(self.endcut==0 and self.ent>=self.End):
+                if(self.ent>=self.End):
                     self.ent=self.Begin
                     self.endfile=1
             if(self.endcut==1 and int((self.End-self.Begin)/self.batch_size)<=int((self.ent-self.Begin)/self.batch_size)):
