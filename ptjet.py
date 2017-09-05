@@ -18,7 +18,7 @@ start=datetime.datetime.now()
 
 jetset=[]
 labels=[]
-pt=[[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
+pt=[[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]]
 maxx=0.4
 maxy=0.4                        
 arnum=16
@@ -38,6 +38,8 @@ for ent in range(entries):
     jetpt=jet.pt
     if(jetpt<2000):     
         pt[int(jetpt/100)].append(ent)
+    else:
+        pt[20].append(ent)
 
 print len(pt)
 f=open("ptjet.txt",'w')

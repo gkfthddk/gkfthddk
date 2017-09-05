@@ -1,0 +1,4 @@
+labeljet.txt  quarkentry and gluonentry
+ptjet.txt  pt entries bin with 100Gev
+ptsort quarkentry and gluonentry sorted by pt
+ptbin.txt  sorted gluon devided by 100 bins boundary

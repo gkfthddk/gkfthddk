@@ -77,7 +77,7 @@ class imiter(mx.io.DataIter):
             while True:
                 self.jet.GetEntry(self.ent)
                 self.ent+=1
-                if(self.jet.pt<100):
+                if(self.jet.pt<100 or abs(self.jet.eta)>2.4 or self.jet.nMatchedJets!=2):
                     pass
                 else:
                     jetset.append(np.array(self.im).reshape((3,2*arnum+1,2*arnum+1)))

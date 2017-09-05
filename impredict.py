@@ -13,7 +13,7 @@ parser=argparse.ArgumentParser()
 parser.add_argument("--begin",type=float,default=0.,help='begin of training must begin<end')
 parser.add_argument("--end",type=float,default=1.,help='end of training must begin<end')
 parser.add_argument("--date",type=str,default="",help='produced date')
-parser.add_argument("--batch_num",default=100,help='the number of each batch')
+parser.add_argument("--batch_size",type=int,default=100,help='the number of each batch')
 parser.add_argument("--entries",type=int,default=2,help='the number to take batches -1 is get all data')
 
 parser.add_argument("--epoch",type=int,default=5,help='check point number')
@@ -63,6 +63,7 @@ if(args.network==None):
 else:
     sym,arg_params,aux_params=mx.model.load_checkpoint("save/jeticheck_"+args.network+"_"+args.date,args.epoch)
 mod=mx.mod.Module(symbol=sym,context=fit.getctx(args.gpus))
+print test_iter.provide_data, test_iter.provide_label
 mod.bind(data_shapes=test_iter.provide_data,label_shapes=test_iter.provide_label)
 mod.init_params()
 mod.set_params(arg_params,aux_params)
@@ -85,27 +86,22 @@ print test_iter.totalnum(),entries
 
 from sklearn.metrics import roc_auc_score, auc,precision_recall_curve,roc_curve,average_precision_score
 
-for i in range(100):
-    x.append(i/100.)
-    y.append(1.-i/100.)
-    groc.append(0)
-    qroc.append(0)
 if(entries==-1):
     entries=test_iter.totalnum()
 for j in range(entries):
-    a=test_iter.next()
-    mod.forward(a)
-    b=mod.get_outputs()[0].asnumpy()[:,1]
-    for i in range(batch_num):
-        #sys.stdout.write("\r%0.2f"%
-        #                (float(100.*ent/entries)))
-        #sys.stdout.flush()
-        #buftime=datetime.datetime.now()
-        #ent+=1
-        if (a.label[0].asnumpy()[i]==1):
-            g.append(b[i])
-        else:
-            q.append(b[i])
+  a=test_iter.next()
+  mod.forward(a)
+  b=mod.get_outputs()[0].asnumpy()[:,1]
+  for i in range(batch_num):
+    #sys.stdout.write("\r%0.2f"%
+    #                (float(100.*ent/entries)))
+    #sys.stdout.flush()
+    #buftime=datetime.datetime.now()
+    #ent+=1
+    if (a.label[0].asnumpy()[i]==1):
+        g.append(b[i])
+    else:
+        q.append(b[i])
 if(args.network==None):
   savename=args.date
 else:
@@ -118,10 +114,6 @@ if(args.save==1):
   plt.savefig('likelyhood_'+savename)
   print 'likelyhood_'+savename,"saved"
 roc=plt.figure(2)
-#plt.plot(groc,qroc,label=str(auc))
-#plt.plot(x,y,label=str(xya))
-#plt.legend(loc="lower left")
-#plt.plot(qroc)
 if(args.save==2):
   t_fpr,t_tpr, _ = roc_curve(a.label[0].asnumpy(),b)
   t_fnr = 1-t_fpr

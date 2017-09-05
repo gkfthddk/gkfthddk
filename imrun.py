@@ -32,6 +32,7 @@ parser.set_defaults(
     batch_size =100,
     disp_batched =99,
     num_epochs =20,
+    optimizer='adagrad',
     lr = .05,
     lr_step_epochs='10',
 )
@@ -52,8 +53,9 @@ start=datetime.datetime.now()
 # train_iter =rootiter('/home/gkfthddk/tutorials/gkfthddk/../jet1.root',['data'],['softmax_label'],batch_size=1000,begin=0,end=0.01)
 # test_iter =rootiter('/home/gkfthddk/tutorials/gkfthddk/../jet1.root',['data'],['softmax_label'],batch_size=1000,begin=0.01,end=0.012)
 batch_num=args.batch_size
-train_iter=imiter('../jetimg.root',['data'],['softmax_label'],batch_size=batch_num,begin=_beg,end=_mid)
-test_iter=imiter('../jetimg.root',['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end)
+print batch_num
+train_iter=imiter('../jetimgnum.root',['data'],['softmax_label'],batch_size=batch_num,begin=_beg,end=_mid)
+test_iter=imiter('../jetimgnum.root',['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end)
 
 net=import_module('symbols.'+args.network)
 sym=net.get_symbol(**vars(args))
@@ -78,7 +80,7 @@ optimizer_params={'learning_rate':0.1},
 #optimizer_params={'learning_rate':0.5,'beta1':0.1,'beta2':0.111},
 #batch_end_callback = [mx.callback.Speedometer(100, 1000),mx.callback.ProgressBar],
 #optimizer_params={'learning_rate':0.1},
-print train_iter.trainnum(),"batches"
+print train_iter.totalnum(),"batches"
 model.fit(train_iter,
                 eval_data=test_iter,
                 optimizer=args.optimizer,
