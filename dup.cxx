@@ -77,14 +77,14 @@ int main() {
   if (batch_size == -1)
     batch_size = jet->GetEntries();
   for (int i = 0; i < batch_size; ++i) {
-    if(pt<100 || nMatchedJets!=2 || eta>2.4){
-      continue;
-    }
     if (i % 10000 == 0)
       std::cout << i <<  '/' << batch_size << std::endl;
     jet->GetEntry(i);
     if (partonId==0)
       continue;
+    if(pt<100 || nMatchedJets!=2 || eta>2.4){
+      continue;
+    }
 
     double r=0, g=0, b=0;
     double palet[3][2*arnum+1][2*arnum+1];
