@@ -8,10 +8,12 @@ import argparse
 from common import fit,data
 from sklearn.model_selection import train_test_split
 from importlib import import_module
+#python wkpredict.py --end 0.5 --rat 0.7 --date "2017-09-11" --save 1
 
 parser=argparse.ArgumentParser()
 parser.add_argument("--begin",type=float,default=0.,help='begin of training must begin<end')
 parser.add_argument("--end",type=float,default=1.,help='end of training must begin<end')
+parser.add_argument("--rat",type=float,default=0.7,help='ratio for qg batch')
 parser.add_argument("--date",type=str,default="",help='produced date')
 parser.add_argument("--batch_size",type=int,default=100,help='the number of each batch')
 parser.add_argument("--entries",type=int,default=2,help='the number to take batches -1 is get all data')
@@ -22,7 +24,7 @@ fit.add_fit_args(parser)
 data.add_data_args(parser)
 
 parser.set_defaults(
-    network = 'vgg',
+    network = "vgg",
     gpus=None,
     num_layers = 18,
     num_classes = 2,
@@ -50,17 +52,14 @@ start=datetime.datetime.now()
 
 
 batch_num=args.batch_size
-#train_iter=imiter('../jetimgnumcut.root',['data'],['softmax_label'],batch_size=batch_num,begin=_beg,end=_mid)
+#train_iter=imiter('../jetimgnum.root',['data'],['softmax_label'],batch_size=batch_num,begin=_beg,end=_mid)
 test_iter=imiter('../jetimgnumcut.root',['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end)
 
 import logging
 logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 # create a trainable module on GPU 0
 # train with the same 
-if(args.network==None):
-    sym,arg_params,aux_params=mx.model.load_checkpoint("save1/jeticheck_"+args.date,args.epoch)
-else:
-    sym,arg_params,aux_params=mx.model.load_checkpoint("save1/jeticheck_"+args.network+"_"+args.date+"/jeticheck",args.epoch)
+sym,arg_params,aux_params=mx.model.load_checkpoint("save1/jetwcheck_"+str(args.rat)+"_"+args.network+"_"+args.date+"/jetwcheck",args.epoch)
 mod=mx.mod.Module(symbol=sym,context=fit.getctx(args.gpus))
 print test_iter.provide_data, test_iter.provide_label
 mod.bind(data_shapes=test_iter.provide_data,label_shapes=test_iter.provide_label)
@@ -85,7 +84,6 @@ from sklearn.metrics import roc_auc_score, auc,precision_recall_curve,roc_curve,
 
 if(entries==-1):
     entries=test_iter.totalnum()
-
 for j in range(entries):
   a=test_iter.next()
   mod.forward(a)
@@ -107,7 +105,7 @@ for j in range(entries):
 if(args.network==None):
   savename=args.date
 else:
-  savename="save1/jeticheck_"+args.network+"_"+args.date+"/"
+  savename="save1/jetwcheck_"+str(args.rat)+"_"+args.network+"_"+args.date+"/"
 like=plt.figure(1)
 if(args.save==1):
   plt.hist(q,bins=30,alpha=0.5,label='quark')

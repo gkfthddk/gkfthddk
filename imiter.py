@@ -90,7 +90,6 @@ class imiter(mx.io.DataIter):
                     self.endfile=1
             if(self.endcut==1 and int((self.End-self.Begin)/self.batch_size)<=int((self.ent-self.Begin)/self.batch_size)):
                 self.endfile=1
-
             data=[mx.nd.array(jetset)]
             label=[mx.nd.array(labels)]
             #data = [mx.nd.array(g(d[1])) for d,g in zip(self._provide_data, self.data_gen)]
