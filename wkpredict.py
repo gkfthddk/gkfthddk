@@ -9,7 +9,7 @@ from common import fit,data
 from sklearn.model_selection import train_test_split
 from importlib import import_module
 #python wkpredict.py --end 0.5 --rat 0.7 --date "2017-09-11" --save 1
-
+#python wkpredict.py --entries 1000 --save 3 --epoch 13 --date "2017-09-18" --gpus "0" --rat 0.7
 parser=argparse.ArgumentParser()
 parser.add_argument("--begin",type=float,default=0.,help='begin of training must begin<end')
 parser.add_argument("--end",type=float,default=1.,help='end of training must begin<end')
@@ -59,7 +59,7 @@ import logging
 logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 # create a trainable module on GPU 0
 # train with the same 
-sym,arg_params,aux_params=mx.model.load_checkpoint("save1/jetwcheck_"+str(args.rat)+"_"+args.network+"_"+args.date+"/jetwcheck",args.epoch)
+sym,arg_params,aux_params=mx.model.load_checkpoint("save1/jetwcheck_"+str(args.rat)+"_"+args.network+"_"+args.date+"/jetcheck",args.epoch)
 mod=mx.mod.Module(symbol=sym,context=fit.getctx(args.gpus))
 print test_iter.provide_data, test_iter.provide_label
 mod.bind(data_shapes=test_iter.provide_data,label_shapes=test_iter.provide_label)
@@ -88,10 +88,10 @@ for j in range(entries):
   a=test_iter.next()
   mod.forward(a)
   b=mod.get_outputs()[0].asnumpy()[:,1]
-  if(args.save==2):
+  if(args.save!=2):
     x=np.append(x,a.label[0].asnumpy())
     y=np.append(y,b)
-  if(args.save==1):
+  if(args.save!=1):
     for i in range(batch_num):
       #sys.stdout.write("\r%0.2f"%
       #                (float(100.*ent/entries)))
@@ -107,14 +107,14 @@ if(args.network==None):
 else:
   savename="save1/jetwcheck_"+str(args.rat)+"_"+args.network+"_"+args.date+"/"
 like=plt.figure(1)
-if(args.save==1):
+if(args.save!=1):
   plt.hist(q,bins=30,alpha=0.5,label='quark')
   plt.hist(g,bins=30,alpha=0.5,label='gluon')
   plt.legend(loc="upper center")
   plt.savefig(savename+"likelyhood_"+str(args.epoch))
   print savename+"likelyhood_"+str(args.epoch),"saved"
 roc=plt.figure(2)
-if(args.save==2):
+if(args.save!=2):
   t_fpr,t_tpr, _ = roc_curve(x,y)
   t_fnr = 1-t_fpr
   train_auc=np.around(auc(t_fpr,t_tpr),4)

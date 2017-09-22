@@ -60,7 +60,7 @@ logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 if(args.network==None):
     sym,arg_params,aux_params=mx.model.load_checkpoint("save1/jeticheck_"+args.date,args.epoch)
 else:
-    sym,arg_params,aux_params=mx.model.load_checkpoint("save1/jeticheck_"+args.network+"_"+args.date+"/jeticheck",args.epoch)
+    sym,arg_params,aux_params=mx.model.load_checkpoint("save1/jeticheck_"+args.network+"_"+args.date+"/jetcheck",args.epoch)
 mod=mx.mod.Module(symbol=sym,context=fit.getctx(args.gpus))
 print test_iter.provide_data, test_iter.provide_label
 mod.bind(data_shapes=test_iter.provide_data,label_shapes=test_iter.provide_label)
@@ -90,10 +90,10 @@ for j in range(entries):
   a=test_iter.next()
   mod.forward(a)
   b=mod.get_outputs()[0].asnumpy()[:,1]
-  if(args.save==2):
+  if(args.save!=2):
     x=np.append(x,a.label[0].asnumpy())
     y=np.append(y,b)
-  if(args.save==1):
+  if(args.save!=1):
     for i in range(batch_num):
       #sys.stdout.write("\r%0.2f"%
       #                (float(100.*ent/entries)))
@@ -109,14 +109,14 @@ if(args.network==None):
 else:
   savename="save1/jeticheck_"+args.network+"_"+args.date+"/"
 like=plt.figure(1)
-if(args.save==1):
+if(args.save!=1):
   plt.hist(q,bins=30,alpha=0.5,label='quark')
   plt.hist(g,bins=30,alpha=0.5,label='gluon')
   plt.legend(loc="upper center")
   plt.savefig(savename+"likelyhood_"+str(args.epoch))
   print savename+"likelyhood_"+str(args.epoch),"saved"
 roc=plt.figure(2)
-if(args.save==2):
+if(args.save!=2):
   t_fpr,t_tpr, _ = roc_curve(x,y)
   t_fnr = 1-t_fpr
   train_auc=np.around(auc(t_fpr,t_tpr),4)
