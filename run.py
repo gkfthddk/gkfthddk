@@ -21,7 +21,6 @@ parser.add_argument("--rat",type=float,default=0.7,help='ratio for weak qg batch
 fit.add_fit_args(parser)
 data.add_data_args(parser)
 
-
 parser.set_defaults(
     network = 'vgg',
     gpus=None,
@@ -63,10 +62,11 @@ rootdata=args.rootdata
 batch_num=args.batch_size
 if(args.train=="w"):
   train_iter=wkiter(rootdata,batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1)
-  savename="save1/jetwcheck_"+str(args.rat)+"_"+args.network+"_"+str(start.date())
+  savename="save/jetwcheck_"+str(args.rat)+"_"+args.network+"_"+str(start.date())
 if(args.train=="i"):
   train_iter=imiter(rootdata,batch_size=batch_num,begin=_beg,end=_mid,istrain=1)
-  savename="save1/jeticheck_"+args.network+"_"+str(start.date())
+  savename="save/jeticheck_"+args.network+"_"+str(start.date())
+
 
 test_iter=imiter('../jetimgnumcut.root',batch_size=batch_num,begin=_mid,end=_end)
 
@@ -77,8 +77,8 @@ sym=net.get_symbol(**vars(args))
 init=mx.initializer.Xavier('uniform','avg',3)
 #init=mx.initializer.MSRAPrelu()
 
-import logging
-logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
+#import logging
+#logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 # create a trainable module on GPU 0
 if("vgg"==args.network):
   print("true")
@@ -94,6 +94,9 @@ optimizer_params={'learning_rate':0.1},
 #optimizer_params={'learning_rate':0.1},
                 #batch_end_callback = 
 subprocess.call("mkdir "+savename,shell=True)
+import logging
+logging.basicConfig(filename=savename+'/log.log',level=logging.DEBUG)
+logging.info(str(args))
 argu=open(savename+'/argu.txt','w')
 argu.write(str(args))
 argu.close()
