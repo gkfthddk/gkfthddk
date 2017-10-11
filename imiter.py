@@ -11,14 +11,15 @@ import math
 from array import array
 
 class imiter(mx.io.DataIter):
-    def __init__(self,data_path,data_names,label_names,batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4):
+    def __init__(self,data_path,data_names=['data'],label_names=['softmax_label'],batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4,istrain=0):
+        self.istrain=istrain
         if(batch_size<100):
             print("batch_size is small it might cause error")
         self.file=rt.TFile(data_path,'read')
         self.jet=self.file.Get("image")
-        self.im = array('b', [0]*(3*(arnum*2+1)*(arnum*2+1)))
+        self.im = array('B', [0]*(3*(arnum*2+1)*(arnum*2+1)))
         self.jet.SetBranchAddress("image", self.im)
-        self.label = array('b', [0])
+        self.label = array('B', [0])
         self.jet.SetBranchAddress("label", self.label)
         self.Entries=self.jet.GetEntriesFast()
         self.Begin=int(self.Entries*begin)
@@ -61,6 +62,15 @@ class imiter(mx.io.DataIter):
         return self.End-self.Begin
     def totalnum(self):
         return int((self.End-self.Begin)/self.batch_size)
+    def getimage(self,ent):
+        self.ent=ent
+        arnum=self.arnum
+        self.jet.GetEntry(ent)
+        jetset=np.array(self.im).reshape((3,2*arnum+1,2*arnum+1))/255.
+        print(self.label[0])
+        print(jetset.dtype)
+        plt.imshow(np.swapaxes(jetset,0,2),interpolation='none')
+        plt.show()
     def next(self):
         if self.endfile==0:
             arnum=self.arnum

@@ -10,13 +10,16 @@ import ROOT as rt
 import math
 from array import array
 
-class niter(mx.io.DataIter):
-    def __init__(self,data_path,data_names,label_names,batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4):
+class imiter(mx.io.DataIter):
+    def __init__(self,data_path,data_names=['data'],label_names=['softmax_label'],batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4,istrain=0):
+        self.istrain=istrain
+        if(batch_size<100):
+            print("batch_size is small it might cause error")
         self.file=rt.TFile(data_path,'read')
         self.jet=self.file.Get("image")
-        self.im = array('b', [0]*(3*(arnum*2+1)*(arnum*2+1)))
+        self.im = array('B', [0]*(3*(arnum*2+1)*(arnum*2+1)))
         self.jet.SetBranchAddress("image", self.im)
-        self.label = array('b', [0])
+        self.label = array('B', [0])
         self.jet.SetBranchAddress("label", self.label)
         self.Entries=self.jet.GetEntriesFast()
         self.Begin=int(self.Entries*begin)
@@ -64,27 +67,36 @@ class niter(mx.io.DataIter):
             arnum=self.arnum
             jetset=[]
             labels=[]
-            while True:
+            """for i in range(self.batch_size):
                 self.jet.GetEntry(self.ent)
+                jetset.append(np.array(self.im).reshape((3,2*arnum+1,2*arnum+1)))
+                labels.append(self.label[0])
                 self.ent+=1
                 if(self.endcut==0 and self.ent>=self.End):
                     self.ent=self.Begin
-                    self.endfile=1
-                if(len(labels)==self.batch_size):
+                    self.endfile=1"""
+            while True:
+                self.jet.GetEntry(self.ent)
+                self.ent+=1
+                if(self.jet.pt<100 or abs(self.jet.eta)>2.4 or self.jet.nMatchedJets!=2):
+                    pass
+                else:
+                    jetset.append(np.array(self.im).reshape((3,2*arnum+1,2*arnum+1)))
+                    labels.append(self.label[0])
+                if(len(labels)>=self.batch_size):
                     break
-		if(self.jet.nMatchedJets!=2):
-                    continue
-                jetset.append(np.array(self.im).reshape((3,2*arnum+1,2*arnum+1)))
-                labels.append(self.label[0])
+                #if(self.endcut==0 and self.ent>=self.End):
+                if(self.ent>=self.End):
+                    self.ent=self.Begin
+                    self.endfile=1
             if(self.endcut==1 and int((self.End-self.Begin)/self.batch_size)<=int((self.ent-self.Begin)/self.batch_size)):
                 self.endfile=1
-
             data=[mx.nd.array(jetset)]
             label=[mx.nd.array(labels)]
             #data = [mx.nd.array(g(d[1])) for d,g in zip(self._provide_data, self.data_gen)]
             #label = [mx.nd.array(g(d[1])) for d,g in zip(self._provide_label, self.label_gen)]
             # print(data)
-            return mx.io.DataBatch(data, label)
+            return mx.io.DataBatch(data, label,)
         else:
             raise StopIteration
 

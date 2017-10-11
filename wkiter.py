@@ -12,19 +12,20 @@ import math
 from array import array
 
 class wkiter(mx.io.DataIter):
-  def __init__(self,data_path,data_names,label_names,batch_size=100,begin=0.0,end=1.0,rat=0.7,endcut=1,arnum=16,maxx=0.4,maxy=0.4):
+  def __init__(self,data_path,data_names=['data'],label_names=['softmax_label'],batch_size=100,begin=0.0,end=1.0,rat=0.7,endcut=1,arnum=16,maxx=0.4,maxy=0.4,istrain=0):
+    self.istrain=istrain
     if(batch_size<100):
       print("batch_size is small it might cause error")
     self.file=rt.TFile(data_path,'read')
     self.qjet=self.file.Get("qimage")
     self.gjet=self.file.Get("gimage")
     self.rat=sorted([1-rat,rat])
-    self.qim = array('b', [0]*(3*(arnum*2+1)*(arnum*2+1)))
-    self.gim = array('b', [0]*(3*(arnum*2+1)*(arnum*2+1)))
+    self.qim = array('B', [0]*(3*(arnum*2+1)*(arnum*2+1)))
+    self.gim = array('B', [0]*(3*(arnum*2+1)*(arnum*2+1)))
     self.qjet.SetBranchAddress("image", self.qim)
     self.gjet.SetBranchAddress("image", self.gim)
-    self.qlabel = array('b', [0])
-    self.glabel = array('b', [0])
+    self.qlabel = array('B', [0])
+    self.glabel = array('B', [0])
     self.qjet.SetBranchAddress("label", self.qlabel)
     self.gjet.SetBranchAddress("label", self.glabel)
     self.qEntries=self.qjet.GetEntriesFast()
@@ -108,5 +109,7 @@ class wkiter(mx.io.DataIter):
       # print(data)
       return mx.io.DataBatch(data, label)
     else:
+      #if(self.istrain==1):
+      #  print "\n",datetime.datetime.now()  
       raise StopIteration
 
