@@ -63,7 +63,6 @@ class imiter(mx.io.DataIter):
     def totalnum(self):
         return int((self.End-self.Begin)/self.batch_size)
     def getimage(self,ent):
-        self.ent=ent
         arnum=self.arnum
         self.jet.GetEntry(ent)
         jetset=np.array(self.im).reshape((3,2*arnum+1,2*arnum+1))/255.
@@ -71,6 +70,17 @@ class imiter(mx.io.DataIter):
         print(jetset.dtype)
         plt.imshow(np.swapaxes(jetset,0,2),interpolation='none')
         plt.show()
+    def sumimage(self,ent):
+        arnum=self.arnum
+        a=np.zeros(33*33*3)
+        for i in range(ent):
+          self.jet.GetEntry(i)
+          a+=np.array(self.im)
+        #a=a.reshape((3,2*arnum+1,2*arnum+1))/max(a)
+        #fig=plt.figure()
+        #plt.imshow(np.swapaxes(a,0,2),interpolation='none')
+        #plt.show()    
+        return a
     def next(self):
         if self.endfile==0:
             arnum=self.arnum
