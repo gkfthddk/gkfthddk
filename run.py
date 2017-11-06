@@ -1,4 +1,5 @@
 from imiter import *
+from niter import *
 from wkiter import *
 import mxnet as mx
 import random
@@ -11,13 +12,18 @@ from sklearn.model_selection import train_test_split
 from importlib import import_module
 # python run.py --network vgg --end 0.1 --batch-size 100 --num-epochs 10 --gpus "1" --optimizer sgd
 #python run.py --end 1 --batch-size 100 --num-epochs 20 --gpus "1" --network vgg --optimizer sgd --rat 0.49
+#python run.py --end 1 --batch-size 100 --num-epochs 30 --gpus "0" --network vgg --optimizer sgd --train w --rat 0.8
+
 parser=argparse.ArgumentParser()
+parser.add_argument("--memo",default="nothing",help='some memo for memo')
 parser.add_argument("--train",default="i",help='i default train w weakly train')
 parser.add_argument("--rootdata",default="../jetimgnumcut.root",help='root data')
 parser.add_argument("--rand",type=int,default=-1,help='seed of randomfunction')
 parser.add_argument("--begin",type=float,default=0.,help='begin of training must begin<end')
 parser.add_argument("--end",type=float,default=.1,help='end of training must begin<end')
 parser.add_argument("--rat",type=float,default=0.7,help='ratio for weak qg batch')
+parser.add_argument("--units",default='3,3,3',help='units')
+parser.add_argument("--growth",type=int,default=2,help='growth rate')
 fit.add_fit_args(parser)
 data.add_data_args(parser)
 
@@ -31,7 +37,7 @@ parser.set_defaults(
     batch_size =100,
     disp_batched =99,
     num_epochs =20,
-    optimizer='adagrad',
+    optimizer='sgd',
     lr = .05,
     lr_step_epochs='10',
 )
@@ -55,34 +61,58 @@ else:
     _mid=(_end-_beg)*5/7+_beg
 start=datetime.datetime.now()
 
-rootdata=args.rootdata
+rootdata=args.rootdata.split(",")
+args.units=[eval(i) for i in args.units.split(",")]
 
 # train_iter =rootiter('/home/gkfthddk/tutorials/gkfthddk/../jet1.root',['data'],['softmax_label'],batch_size=1000,begin=0,end=0.01)
 # test_iter =rootiter('/home/gkfthddk/tutorials/gkfthddk/../jet1.root',['data'],['softmax_label'],batch_size=1000,begin=0.01,end=0.012)
 batch_num=args.batch_size
 if(args.train=="w"):
-  train_iter=wkiter(rootdata,batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1)
+  train_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=20,w=1)
+  #train_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=0,end=_end,rat=args.rat,istrain=1,friend=50,zboson=1,w=1)
+  savename="save/jetwcheck_"+args.network+"_"+str(start.date())
+  test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=20,zboson=0)
+  #test_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=50,zboson=1)
+  #train_iter=wkiter(rootdata[0],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=0)
   savename="save/jetwcheck_"+str(args.rat)+"_"+args.network+"_"+str(start.date())
+  #test_iter=wkiter(["data/pp_zq_default_","data/pp_zg_default_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=1)
+  #test_iter=imiter('../jetimgnumcut.root',batch_size=batch_num,begin=_mid,end=_end)
+if(args.train=="f"):
+  #train_iter=wkiter(rootdata,batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=2)
+  #train_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=20)
+  train_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=0,end=_end,rat=args.rat,istrain=1,friend=50,zboson=1)
+  savename="save/jetwcheck_"+args.network+"_"+str(start.date())
+  test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=20,zboson=0)
+  #test_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=50,zboson=1)
 if(args.train=="i"):
-  train_iter=imiter(rootdata,batch_size=batch_num,begin=_beg,end=_mid,istrain=1)
+  train_iter=imiter(rootdata[0],batch_size=batch_num,begin=_beg,end=_mid,istrain=1)
   savename="save/jeticheck_"+args.network+"_"+str(start.date())
-
-
-test_iter=imiter('../jetimgnumcut.root',batch_size=batch_num,begin=_mid,end=_end)
+  test_iter=imiter('../jetimgnumcut.root',batch_size=batch_num,begin=_mid,end=_end)
+if(args.train=="n"):
+  args.network="nvgg"
+  train_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=20,varbs=1)
+  test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=20,zboson=0,varbs=1)
+  #train_iter=niter(rootdata[0],batch_size=batch_num,begin=_beg,end=_mid,istrain=1)
+  savename="save/jetncheck_"+args.network+"_"+str(start.date())
+  #test_iter=niter('../jetimgnumcut.root',batch_size=batch_num,begin=_mid,end=_end)
 
 net=import_module('symbols.'+args.network)
 
-sym=net.get_symbol(**vars(args))
+if(args.network=="dense"):
+  sym=net.DenseNet(units=args.units, num_stage=len(args.units), growth_rate=4, num_class=2, reduction=0.5, drop_out=0.2, bottle_neck=True,bn_mom=0.9)
+else:
+  sym=net.get_symbol(**vars(args))
+
 
 init=mx.initializer.Xavier('uniform','avg',3)
 #init=mx.initializer.MSRAPrelu()
-
 #import logging
 #logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
 # create a trainable module on GPU 0
-if("vgg"==args.network):
-  print("true")
-model = mx.mod.Module(symbol=sym, context=fit.getctx(args.gpus))
+if(args.train=="n"):
+  model = mx.mod.Module(data_names=('images','variables'),symbol=sym, context=fit.getctx(args.gpus))
+else:
+  model = mx.mod.Module(symbol=sym, context=fit.getctx(args.gpus))
 #model=fit.getmodel(args,sym)
 # train with the same 
 """
@@ -97,6 +127,7 @@ subprocess.call("mkdir "+savename,shell=True)
 import logging
 logging.basicConfig(filename=savename+'/log.log',level=logging.DEBUG)
 logging.info(str(args))
+logging.info(str(train_iter.totalnum())+" batches")
 argu=open(savename+'/argu.txt','w')
 argu.write(str(args))
 argu.close()
@@ -105,9 +136,9 @@ model.fit(train_iter,
                 eval_data=test_iter,
                 initializer=init, 
                 optimizer=args.optimizer,
-                eval_metric='acc',
+                eval_metric=['acc'] if args.network!="dense" else ['acc',mx.metric.create('top_k_accuracy',top_k=5)],
                 batch_end_callback =
-                [mx.callback.ProgressBar(train_iter.totalnum()),mx.callback.Speedometer(batch_num,train_iter.totalnum()-1)],
+                [mx.callback.ProgressBar(train_iter.totalnum()),mx.callback.Speedometer(batch_num,train_iter.totalnum()/2+1)],
                 epoch_end_callback=mx.callback.do_checkpoint(savename+'/jetcheck'),
                 num_epoch=args.num_epochs)
 #lenet_model.save_checkpoint(prefix='jeti1_1',epoch=10)

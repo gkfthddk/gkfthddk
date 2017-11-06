@@ -1,4 +1,5 @@
 from imiter import *
+from wkiter import *
 from rootiter import *
 import mxnet as mx
 import numpy as np
@@ -19,6 +20,7 @@ parser.add_argument("--entries",type=int,default=2,help='the number to take batc
 
 parser.add_argument("--epoch",type=str,default=5,help='check point number')
 parser.add_argument("--save",type=str,default=1,help='1 likelyhood 2 roc')
+parser.add_argument("--test",type=str,default=1,help='1 likelyhood 2 roc')
 fit.add_fit_args(parser)
 data.add_data_args(parser)
 
@@ -53,6 +55,10 @@ start=datetime.datetime.now()
 batch_num=args.batch_size
 #train_iter=imiter('../jetimgnum.root',['data'],['softmax_label'],batch_size=batch_num,begin=_beg,end=_mid)
 test_iter=imiter('../jetimgnumcut.root',['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end)
+if(args.test=="fd"):
+  test_iter=wkiter(['data/mg5_pp_qq_balanced_pt_100_500_','data/mg5_pp_gg_balanced_pt_100_500_'],['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end,friend=20)
+if(args.test=="fz"):
+  test_iter=wkiter(['data/mg5_pp_zq_passed_pt_100_500_','data/mg5_pp_zg_passed_pt_100_500_'],['data'],['softmax_label'],batch_size=batch_num,begin=_mid,end=_end,friend=50,zboson=1)
 
 import logging
 logging.getLogger().setLevel(logging.DEBUG)  # logging to stdout
@@ -78,10 +84,13 @@ for i in range(len(rat)):
     epoch[i]=eval(epoch[i])
 for d in range(len(rat)):
   test_iter.reset()
-  if(rat[d]==None):
+  if(args.test=="f"):
+    sym,arg_params,aux_params=mx.model.load_checkpoint("save/jetwcheck_"+net[d]+"_"+date[d]+"/jetcheck",epoch[d])
+  elif(rat[d]==None):
     sym,arg_params,aux_params=mx.model.load_checkpoint("save/jeticheck_"+net[d]+"_"+date[d]+"/jetcheck",epoch[d])
   else:
     sym,arg_params,aux_params=mx.model.load_checkpoint("save/jetwcheck_"+str(rat[d])+"_"+net[d]+"_"+date[d]+"/jetcheck",epoch[d])
+
   mod=mx.mod.Module(symbol=sym,context=fit.getctx(args.gpus))
   print test_iter.provide_data, test_iter.provide_label
   mod.bind(data_shapes=test_iter.provide_data,label_shapes=test_iter.provide_label)
@@ -124,34 +133,44 @@ for d in range(len(rat)):
             g.append(b[i])
         else:
             q.append(b[i])
-  like=plt.figure(1)
-  plt.hist(q,bins=30,normed=1,histtype='step',alpha=0.7,label=str(rat[d])+'quark')
-  plt.hist(g,bins=30,normed=1,histtype='step',alpha=0.7,label=str(rat[d])+'gluon')
-  plt.legend(loc="upper right")
   plt.figure(3+2*d)
-  plt.hist(q,bins=30,normed=1,histtype='step',alpha=0.7,label=str(rat[d])+'quark')
-  plt.hist(g,bins=30,normed=1,histtype='step',alpha=0.7,label=str(rat[d])+'gluon')
-  plt.legend(loc="upper right")
-  plt.savefig(savename+"like_"+str(rat[d])+"_"+date[d]+".png")
-  #x1,x2,y1,y2=plt.axis()
+  plt.hist(q,bins=50,weights=np.ones_like(q),histtype='step',alpha=0.7,label=str(rat[d])+'quark')
+  plt.hist(g,bins=50,weights=np.ones_like(g),histtype='step',alpha=0.7,label=str(rat[d])+'gluon')
+  plt.legend(loc="upper center")
+  x1,x2,y1,y2=plt.axis()
+  plt.savefig(savename+"_"+str(rat[d])+"_"+date[d]+"like.png")
+  f=open(savename+"_"+str(rat[d])+"_"+date[d]+"like.dat",'w')
+  f.write(str(q)+"\n")
+  f.write(str(g))
+  f.close()
+
+  like=plt.figure(1)
+  plt.hist(q,bins=50,weights=np.ones_like(q)/y2,histtype='step',alpha=0.7,label=str(rat[d])+'quark')
+  plt.hist(g,bins=50,weights=np.ones_like(g)/y2,histtype='step',alpha=0.7,label=str(rat[d])+'gluon')
+  plt.legend(loc="center left",bbox_to_anchor=(1,0.5))
+  #plt.legend(loc=(1.04,0.5))
   #plt.axis((x1,x2,0,1))
 
   roc=plt.figure(2)
   t_fpr,t_tpr, _ = roc_curve(x,y)
   t_fnr = 1-t_fpr
   train_auc=np.around(auc(t_fpr,t_tpr),4)
-  plt.plot(t_tpr,t_fnr,alpha=0.6,label=str(rat[d])+"AUC = {}".format(train_auc),lw=2)
+  plt.plot(t_tpr,t_fnr,alpha=0.5,label=str(rat[d])+"AUC = {}".format(train_auc),lw=2)
   plt.legend(loc='lower left')
   plt.figure(3+2*d+1)
-  plt.plot(t_tpr,t_fnr,alpha=0.6,label=str(rat[d])+"AUC = {}".format(train_auc),lw=2)
+  plt.plot(t_tpr,t_fnr,alpha=0.5,label=str(rat[d])+"AUC = {}".format(train_auc),lw=2)
   plt.legend(loc='lower left')
-  plt.savefig(savename+"roc_"+str(rat[d])+"_"+date[d]+"_"+str(train_auc)+".png")
+  plt.savefig(savename+"_"+str(rat[d])+"_"+date[d]+"_"+str(train_auc)+"roc.png")
+  f=open(savename+"_"+str(rat[d])+"_"+date[d]+"roc.dat",'w')
+  f.write(str(t_tpr.tolist())+'\n')
+  f.write(str(t_fnr.tolist()))
+  f.close()
   print datetime.datetime.now()-start
 like=plt.figure(1)
-plt.savefig(savename+"like")
+plt.savefig(savename+"like",bbox_inches='tight')
 roc=plt.figure(2)
 plt.savefig(savename+"roc")
 argu=open(savename+".txt",'w')
 argu.write(str(args))
 argu.close()
-print savename+"likelyhood","saved"
+print savename+" ","saved"

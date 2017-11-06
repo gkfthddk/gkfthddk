@@ -10,8 +10,8 @@ import ROOT as rt
 import math
 from array import array
 
-class imiter(mx.io.DataIter):
-    def __init__(self,data_path,data_names=['data'],label_names=['softmax_label'],batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4,istrain=0):
+class niter(mx.io.DataIter):
+    def __init__(self,data_path,data_names=['images','variables'],label_names=['softmax_label'],batch_size=100,begin=0.0,end=1.0,endcut=1,arnum=16,maxx=0.4,maxy=0.4,istrain=0):
         self.istrain=istrain
         if(batch_size<100):
             print("batch_size is small it might cause error")
@@ -25,7 +25,7 @@ class imiter(mx.io.DataIter):
         self.Begin=int(self.Entries*begin)
         self.End=int(self.Entries*end)
         self.batch_size = batch_size
-        self._provide_data = zip(data_names, [(self.batch_size, 3, 33, 33)])
+        self._provide_data = zip(data_names, [(self.batch_size, 3, 33, 33),(self.batch_size,3)])
         self._provide_label = zip(label_names, [(self.batch_size,)])
         self.ent=self.Begin
         self.arnum=arnum
@@ -66,6 +66,8 @@ class imiter(mx.io.DataIter):
         if self.endfile==0:
             arnum=self.arnum
             jetset=[]
+            ptset=[]
+            variables=[]
             labels=[]
             """for i in range(self.batch_size):
                 self.jet.GetEntry(self.ent)
@@ -82,6 +84,8 @@ class imiter(mx.io.DataIter):
                     pass
                 else:
                     jetset.append(np.array(self.im).reshape((3,2*arnum+1,2*arnum+1)))
+                    ptset.append([100*self.label[0]+100,self.label[0],self.label[0]])
+                    variables.append([self.jet.ptD,self.jet.axis1,self.jet.axis2,self.jet.nmult,self.jet.cmult])
                     labels.append(self.label[0])
                 if(len(labels)>=self.batch_size):
                     break
@@ -91,7 +95,7 @@ class imiter(mx.io.DataIter):
                     self.endfile=1
             if(self.endcut==1 and int((self.End-self.Begin)/self.batch_size)<=int((self.ent-self.Begin)/self.batch_size)):
                 self.endfile=1
-            data=[mx.nd.array(jetset)]
+            data=[mx.nd.array(jetset),mx.nd.array(variables)]
             label=[mx.nd.array(labels)]
             #data = [mx.nd.array(g(d[1])) for d,g in zip(self._provide_data, self.data_gen)]
             #label = [mx.nd.array(g(d[1])) for d,g in zip(self._provide_label, self.label_gen)]
