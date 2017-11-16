@@ -68,7 +68,8 @@ args.units=[eval(i) for i in args.units.split(",")]
 # test_iter =rootiter('/home/gkfthddk/tutorials/gkfthddk/../jet1.root',['data'],['softmax_label'],batch_size=1000,begin=0.01,end=0.012)
 batch_num=args.batch_size
 if(args.train=="w"):
-  train_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=20,w=1)
+  train_iter=wkiter(["data/q"+str(int(args.rat*100))+"img.root","data/g"+str(int(args.rat*100))+"img.root"],batch_size=batch_num,begin=_beg,end= _end,rat=args.rat,istrain=1,friend=0)
+  #train_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=20,w=1)
   #train_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=0,end=_end,rat=args.rat,istrain=1,friend=50,zboson=1,w=1)
   savename="save/jetwcheck_"+args.network+"_"+str(start.date())
   test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=20,zboson=0)
@@ -78,9 +79,8 @@ if(args.train=="w"):
   #test_iter=wkiter(["data/pp_zq_default_","data/pp_zg_default_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=1)
   #test_iter=imiter('../jetimgnumcut.root',batch_size=batch_num,begin=_mid,end=_end)
 if(args.train=="f"):
-  #train_iter=wkiter(rootdata,batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=2)
-  #train_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=20)
-  train_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=0,end=_end,rat=args.rat,istrain=1,friend=50,zboson=1)
+  train_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=20)
+  #train_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=50,zboson=1)
   savename="save/jetwcheck_"+args.network+"_"+str(start.date())
   test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=20,zboson=0)
   #test_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=50,zboson=1)
@@ -127,6 +127,7 @@ subprocess.call("mkdir "+savename,shell=True)
 import logging
 logging.basicConfig(filename=savename+'/log.log',level=logging.DEBUG)
 logging.info(str(args))
+logging.info(str(datetime.datetime.now()))
 logging.info(str(train_iter.totalnum())+" batches")
 argu=open(savename+'/argu.txt','w')
 argu.write(str(args))

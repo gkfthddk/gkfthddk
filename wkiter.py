@@ -53,12 +53,12 @@ class wkiter(mx.io.DataIter):
         self.gjet.append(self.gfile[i].Get("image"))
         self.qim.append(array('B', [0]*(3*(arnum*2+1)*(arnum*2+1))))
         self.gim.append(array('B', [0]*(3*(arnum*2+1)*(arnum*2+1))))
-        self.qlabel.append(array('B', [0]))
-        self.glabel.append(array('B', [0]))
+        #self.qlabel.append(array('B', [0]))
+        #self.glabel.append(array('B', [0]))
         self.qjet[i].SetBranchAddress("image", self.qim[i])
         self.gjet[i].SetBranchAddress("image", self.gim[i])
-        self.qjet[i].SetBranchAddress("label", self.qlabel[i])
-        self.gjet[i].SetBranchAddress("label", self.glabel[i])
+        #self.qjet[i].SetBranchAddress("label", self.qlabel[i])
+        #self.gjet[i].SetBranchAddress("label", self.glabel[i])
         self.qEntries.append(self.qjet[i].GetEntriesFast())
         self.gEntries.append(self.gjet[i].GetEntriesFast())
         self.qBegin.append(int(begin*self.qEntries[i]))
@@ -70,17 +70,21 @@ class wkiter(mx.io.DataIter):
       self.aq=self.gBegin[self.frat]
       self.bg=self.qBegin[self.frat]
     else:
-      self.file=rt.TFile(data_path,'read')
-      self.qjet=self.file.Get("qimage")
-      self.gjet=self.file.Get("gimage")
+      #self.file=rt.TFile(data_path,'read')
+      dataname1=data_path[0]
+      dataname2=data_path[1]
+      self.qfile=rt.TFile(dataname1,'read')
+      self.gfile=rt.TFile(dataname2,'read')
+      self.qjet=self.qfile.Get("image")
+      self.gjet=self.gfile.Get("image")
       self.qim = array('B', [0]*(3*(arnum*2+1)*(arnum*2+1)))
       self.gim = array('B', [0]*(3*(arnum*2+1)*(arnum*2+1)))
       self.qjet.SetBranchAddress("image", self.qim)
       self.gjet.SetBranchAddress("image", self.gim)
-      self.qlabel = array('B', [0])
-      self.glabel = array('B', [0])
-      self.qjet.SetBranchAddress("label", self.qlabel)
-      self.gjet.SetBranchAddress("label", self.glabel)
+      #self.qlabel = array('B', [0])
+      #self.glabel = array('B', [0])
+      #self.qjet.SetBranchAddress("label", self.qlabel)
+      #self.gjet.SetBranchAddress("label", self.glabel)
       self.qEntries=self.qjet.GetEntriesFast()
       self.gEntries=self.gjet.GetEntriesFast()
       self.qBegin=int(begin*self.qEntries)
@@ -109,7 +113,7 @@ class wkiter(mx.io.DataIter):
 
   def reset(self):
     if(self.friend!=0):
-      print "@@",self.istrain,self.gf,self.qf,"@@"
+      print "@@",self.istrain,"g",self.gf,"q",self.qf,"@@"
       for i in range(self.friend):
         self.qjet[i].GetEntry(self.qBegin[i])
         self.gjet[i].GetEntry(self.gBegin[i])
@@ -167,6 +171,10 @@ class wkiter(mx.io.DataIter):
         rand=0.31354286
       if(self.friend!=0 and self.zboson==1):
         rand=0.526
+      if(self.friend!=0 and self.zboson==0 and self.istrain==1 and self.w==1):
+        rand=0.37
+      if(self.friend!=0 and self.zboson==0 and self.istrain==0 and self.w==1):
+        rand=0.6
       for i in range(self.batch_size):
         if(self.friend!=0):
           if(self.w==0):
@@ -197,7 +205,7 @@ class wkiter(mx.io.DataIter):
                   self.qf=0
                 self.b=self.gBegin[self.qf]
           else:
-            if(random.random()<0.5):
+            if(random.random()<rand):
               if(random.random()<self.ratt):
                 self.gjet[self.gf].GetEntry(self.a)
                 self.a+=1
@@ -212,12 +220,12 @@ class wkiter(mx.io.DataIter):
                     self.gf=0
                   self.a=self.gBegin[self.gf]
               else:
-                self.gjet[self.gq].GetEntry(self.aq)
+                self.qjet[self.gq].GetEntry(self.aq)
                 self.aq+=1
                 jetset.append(np.array(self.gim[self.gq]).reshape((3,2*arnum+1,2*arnum+1)))
                 labels.append(1)
                 if(self.varbs==1):
-                  variables.append([self.gjet[self.gq].ptD,self.gjet[self.gq].axis1,self.gjet[self.gq].axis2,self.gjet[self.gq].nmult,self.gjet[self.gq].cmult])
+                  variables.append([self.qjet[self.gq].ptD,self.qjet[self.gq].axis1,self.qjet[self.gq].axis2,self.qjet[self.gq].nmult,self.qjet[self.gq].cmult])
                 if(self.aq>=self.gEnd[self.gq]):
                   self.gq+=1
                   if(self.gq==self.friend):
@@ -239,12 +247,12 @@ class wkiter(mx.io.DataIter):
                     self.qf=0
                   self.b=self.gBegin[self.qf]
               else:
-                self.qjet[self.qg].GetEntry(self.bg)
+                self.gjet[self.qg].GetEntry(self.bg)
                 self.bg+=1
                 jetset.append(np.array(self.qim[self.qg]).reshape((3,2*arnum+1,2*arnum+1)))
                 labels.append(0)
                 if(self.varbs==1):
-                  variables.append([self.qjet[self.qg].ptD,self.qjet[self.qg].axis1,self.qjet[self.qg].axis2,self.qjet[self.qg].nmult,self.qjet[self.qg].cmult])
+                  variables.append([self.gjet[self.qg].ptD,self.gjet[self.qg].axis1,self.gjet[self.qg].axis2,self.gjet[self.qg].nmult,self.gjet[self.qg].cmult])
                 if(self.bg>=self.qEnd[self.qg]):
                   self.qg+=1
                   if(self.qg==self.friend):
@@ -254,10 +262,12 @@ class wkiter(mx.io.DataIter):
 
 
         else:
-          if(random.random()<rand):
+          if(random.random()<0.5):
+          #if(random.random()<rand):
             self.gjet.GetEntry(self.a)
             self.a+=1
             jetset.append(np.array(self.gim).reshape((3,2*arnum+1,2*arnum+1)))
+            labels.append(1)
             if(self.a>=self.gEnd):
               self.a=self.gBegin
               self.endfile=1
@@ -265,13 +275,14 @@ class wkiter(mx.io.DataIter):
             self.qjet.GetEntry(self.b)
             self.b+=1
             jetset.append(np.array(self.qim).reshape((3,2*arnum+1,2*arnum+1)))
+            labels.append(0)
             if(self.b>=self.qEnd):
               self.b=self.gBegin
               self.endfile=1
-          if(rand<0.5):
-              labels.append(0)
-          else:
-              labels.append(1)
+          #if(rand<0.5):
+          #    labels.append(0)
+          #else:
+          #    labels.append(1)
           #if(self.endcut==0 and self.ent>=self.End):
               #self.ent=self.Begin
               #self.endfile=1
