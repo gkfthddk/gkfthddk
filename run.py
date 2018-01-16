@@ -1,6 +1,7 @@
-from imiter import *
+from iter import *
 from niter import *
-from wkiter import *
+#from wkiter import *
+from iter import *
 import mxnet as mx
 import random
 import datetime
@@ -24,13 +25,17 @@ parser.add_argument("--end",type=float,default=.1,help='end of training must beg
 parser.add_argument("--rat",type=float,default=0.7,help='ratio for weak qg batch')
 parser.add_argument("--units",default='3,3,3',help='units')
 parser.add_argument("--growth",type=int,default=2,help='growth rate')
+parser.add_argument("--save",type=str,default="jetwcheck_",help='savename')
+parser.add_argument("--left",type=str,default="qq",help='left train')
+parser.add_argument("--right",type=str,default="gg",help='right train')
+parser.add_argument("--ztest",type=int,default=0,help='true test zjet')
 fit.add_fit_args(parser)
 data.add_data_args(parser)
 
 parser.set_defaults(
     network = 'vgg',
     gpus=None,
-    num_layers = 18,
+    num_layers = 13,
     num_classes = 2,
     image_shape = '3,33,33',
     pad_size=4,
@@ -64,38 +69,13 @@ start=datetime.datetime.now()
 rootdata=args.rootdata.split(",")
 args.units=[eval(i) for i in args.units.split(",")]
 
-# train_iter =rootiter('/home/gkfthddk/tutorials/gkfthddk/../jet1.root',['data'],['softmax_label'],batch_size=1000,begin=0,end=0.01)
-# test_iter =rootiter('/home/gkfthddk/tutorials/gkfthddk/../jet1.root',['data'],['softmax_label'],batch_size=1000,begin=0.01,end=0.012)
-batch_num=args.batch_size
-if(args.train=="w"):
-  train_iter=wkiter(["data/q"+str(int(args.rat*100))+"img.root","data/g"+str(int(args.rat*100))+"img.root"],batch_size=batch_num,begin=_beg,end= _end,rat=args.rat,istrain=1,friend=0)
-  #train_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=20,w=1)
-  #train_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=0,end=_end,rat=args.rat,istrain=1,friend=50,zboson=1,w=1)
-  savename="save/jetwcheck_"+args.network+"_"+str(start.date())
-  test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=20,zboson=0)
-  #test_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=50,zboson=1)
-  #train_iter=wkiter(rootdata[0],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=0)
-  savename="save/jetwcheck_"+str(args.rat)+"_"+args.network+"_"+str(start.date())
-  #test_iter=wkiter(["data/pp_zq_default_","data/pp_zg_default_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=1)
-  #test_iter=imiter('../jetimgnumcut.root',batch_size=batch_num,begin=_mid,end=_end)
-if(args.train=="f"):
-  train_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=20)
-  #train_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=50,zboson=1)
-  savename="save/jetwcheck_"+args.network+"_"+str(start.date())
-  test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=20,zboson=0)
-  #test_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_","data/mg5_pp_zg_passed_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=50,zboson=1)
-if(args.train=="i"):
-  train_iter=imiter(rootdata[0],batch_size=batch_num,begin=_beg,end=_mid,istrain=1)
-  savename="save/jeticheck_"+args.network+"_"+str(start.date())
-  test_iter=imiter('../jetimgnumcut.root',batch_size=batch_num,begin=_mid,end=_end)
-if(args.train=="n"):
-  args.network="nvgg"
-  train_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_beg,end=_mid,rat=args.rat,istrain=1,friend=20,varbs=1)
-  test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_","data/mg5_pp_gg_balanced_pt_100_500_"],batch_size=batch_num,begin=_mid,end=_end,rat=args.rat,istrain=0,friend=20,zboson=0,varbs=1)
-  #train_iter=niter(rootdata[0],batch_size=batch_num,begin=_beg,end=_mid,istrain=1)
-  savename="save/jetncheck_"+args.network+"_"+str(start.date())
-  #test_iter=niter('../jetimgnumcut.root',batch_size=batch_num,begin=_mid,end=_end)
 
+train_iter=wkiter(["data/train"+args.left+str(int(args.rat*100))+"img.root","data/train"+args.right+str(int(args.rat*100))+"img.root"],batch_size=args.batch_size,end=args.end,istrain=1,friend=0)
+if(args.ztest==1):test_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_sum_img.root","data/mg5_pp_zg_passed_pt_100_500_sum_img.root"],batch_size=args.batch_size,begin=5./7.,end=5./7.+args.end*2./7.,istrain=0,friend=0)
+else:test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_sum_img.root","data/mg5_pp_gg_balanced_pt_100_500_sum_img.root"],batch_size=args.batch_size,begin=5./7.,end=5./7.+args.end*2./7.,istrain=0,friend=0)
+savename="save/"+args.save+str(args.rat)
+#savename="save/"+args.save+str(args.rat)+"_"+str(start.date())
+#savename="save/"+args.save+str(args.rat)+"_"+args.network+"_"+str(start.date())
 net=import_module('symbols.'+args.network)
 
 if(args.network=="dense"):
@@ -124,6 +104,7 @@ optimizer_params={'learning_rate':0.1},
 #optimizer_params={'learning_rate':0.1},
                 #batch_end_callback = 
 subprocess.call("mkdir "+savename,shell=True)
+subprocess.call("rm "+savename+'/log.log',shell=True)
 import logging
 logging.basicConfig(filename=savename+'/log.log',level=logging.DEBUG)
 logging.info(str(args))
@@ -137,11 +118,22 @@ model.fit(train_iter,
                 eval_data=test_iter,
                 initializer=init, 
                 optimizer=args.optimizer,
-                eval_metric=['acc'] if args.network!="dense" else ['acc',mx.metric.create('top_k_accuracy',top_k=5)],
+                eval_metric=['accuracy'] if args.network!="dense" else ['acc',mx.metric.create('top_k_accuracy',top_k=5)],
                 batch_end_callback =
-                [mx.callback.ProgressBar(train_iter.totalnum()),mx.callback.Speedometer(batch_num,train_iter.totalnum()/2+1)],
-                epoch_end_callback=mx.callback.do_checkpoint(savename+'/jetcheck'),
+                [mx.callback.Speedometer(args.batch_size,train_iter.totalnum()/2+1)],
+                epoch_end_callback=mx.callback.do_checkpoint(savename+'/_'),
                 num_epoch=args.num_epochs)
 #lenet_model.save_checkpoint(prefix='jeti1_1',epoch=10)
+
+acc=0
+for line in reversed(open(savename+"/log.log").readlines()):
+  indx=line.find("Validation-accuracy")
+  if(indx!=-1):
+    accbuf=eval(line[indx+20:])
+    if(acc<accbuf):
+      acc=accbuf
+      epoch=eval(line[line.find("Epoch")+6:line.find("Validation")-2])+1
+for i in range(args.num_epochs):
+  if(i+1!=epoch):subprocess.call("rm "+savename+'/_-{0:04d}'.format(i+1)+".params",shell=True)
 
 print datetime.datetime.now()-start
