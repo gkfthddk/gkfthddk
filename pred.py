@@ -17,11 +17,15 @@ parser.add_argument("--date",type=str,default="",help='produced date')
 parser.add_argument("--batch_size",type=int,default=500,help='the number of each batch')
 parser.add_argument("--entries",type=int,default=2,help='the number to take batches -1 is get all data')
 
-parser.add_argument("--ztest",type=int,default=0,help='check point number')
 parser.add_argument("--epoch",type=str,default="0",help='check point number')
 parser.add_argument("--load",type=str,default=1,help='loadname')
 parser.add_argument("--save",type=str,default=1,help='savename')
-parser.add_argument("--test",type=str,default="3",help='1 likelyhood 2 roc')
+parser.add_argument("--ztest",type=int,default=0,help='check point number')
+parser.add_argument("--wtest",type=int,default=0,help='check point number')
+parser.add_argument("--left",type=str,default="qq",help='left test')
+parser.add_argument("--right",type=str,default="gg",help='right test')
+
+parser.add_argument("--test",type=str,default="3",help='1 output 2 roc')
 fit.add_fit_args(parser)
 data.add_data_args(parser)
 
@@ -83,6 +87,7 @@ for d in range(len(rat)):
   savename="save/"+args.load+str(rat[d])+"/"+args.save
   if(args.ztest==1):test_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_sum_img.root","data/mg5_pp_zg_passed_pt_100_500_sum_img.root"],batch_size=args.batch_size,begin=5./7.,end=5./7.+args.end*2./7.,istrain=0,friend=0,test=1)
   else:test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_sum_img.root","data/mg5_pp_gg_balanced_pt_100_500_sum_img.root"],batch_size=args.batch_size,begin=5./7.,end=5./7.+args.end*2./7.,istrain=0,friend=0,test=1)
+  if(args.wtest==1):test_iter=wkiter(["data/test"+args.left+"img.root","data/test"+args.right+"img.root"],batch_size=args.batch_size,end=args.end,istrain=1,friend=0)
   if(epoch[d]==0):
     acc=0
     for line in reversed(open("save/"+args.load+str(rat[d])+"/log.log").readlines()):
@@ -143,13 +148,13 @@ for d in range(len(rat)):
   plt.hist(g,bins=50,weights=np.ones_like(g),histtype='step',alpha=0.7,label=str(rat[d])+'gluon')
   plt.legend(loc="upper center")
   x1,x2,y1,y2=plt.axis()
-  plt.savefig(savename+"like.png")
-  f=open(savename+"like.dat",'w')
+  plt.savefig(savename+"out.png")
+  f=open(savename+"out.dat",'w')
   f.write(str(q)+"\n")
   f.write(str(g))
   f.close()
 
-  like=plt.figure(1)
+  out=plt.figure(1)
   plt.hist(q,bins=50,weights=np.ones_like(q)/y2,histtype='step',alpha=0.7,label=str(rat[d])+'quark')
   plt.hist(g,bins=50,weights=np.ones_like(g)/y2,histtype='step',alpha=0.7,label=str(rat[d])+'gluon')
   plt.legend(loc="center left",bbox_to_anchor=(1,0.5))
@@ -172,8 +177,8 @@ for d in range(len(rat)):
   f.write(str(t_fnr.tolist()))
   f.close()
   print datetime.datetime.now()-start
-like=plt.figure(1)
-plt.savefig(savename+"sumlike",bbox_inches='tight')
+out=plt.figure(1)
+plt.savefig(savename+"sumout",bbox_inches='tight')
 roc=plt.figure(2)
 plt.savefig(savename+"sumroc")
 argu=open(savename+".txt",'w')

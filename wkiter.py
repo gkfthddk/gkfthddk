@@ -11,7 +11,7 @@ import ROOT as rt
 import math
 from array import array
 
-class wkiter(mx.io.DataIter):
+class weakiter(mx.io.DataIter):
   def __init__(self,data_path,data_names=['data'],label_names=['softmax_label'],batch_size=100,begin=0.0,end=1.0,rat=0.7,endcut=1,arnum=16,maxx=0.4,maxy=0.4,istrain=0,friend=0,zboson=0,varbs=0,w=0):
     self.istrain=istrain
     if(batch_size<100):
@@ -44,6 +44,8 @@ class wkiter(mx.io.DataIter):
       self.gBegin=[]
       self.qEnd=[]
       self.gEnd=[]
+      self.qnum=0
+      self.gnum=0
       for i in range(friend):
         dataname1=data_path[0]+str(i+1)+"_img.root"
         dataname2=data_path[1]+str(i+1)+"_img.root"
@@ -65,6 +67,8 @@ class wkiter(mx.io.DataIter):
         self.gBegin.append(int(begin*self.gEntries[i]))
         self.qEnd.append(int(self.qEntries[i]*end))
         self.gEnd.append(int(self.gEntries[i]*end))
+        self.qnum+=self.qEnd[i]-self.qBegin[i]
+        self.gnum+=self.gEnd[i]-self.gBegin[i]
       self.a=self.gBegin[0]
       self.b=self.qBegin[0]
       self.aq=self.gBegin[self.frat]
@@ -152,12 +156,12 @@ class wkiter(mx.io.DataIter):
     return self.End-self.Begin
   def totalnum(self):
     if(self.friend!=0):  
-      a=0
-      for i in range(self.friend):
-        a+=self.qEnd[i]-self.qBegin[i]+self.gEnd[i]-self.qBegin[i]
-      return int(a/self.batch_size)
+      #a=0
+      #for i in range(self.friend):
+      #  a+=self.qEnd[i]-self.qBegin[i]+self.gEnd[i]-self.qBegin[i]
+      return int((self.qnum+self.gnum)/self.batch_size*0.99)
     else:
-      return int((self.qEnd-self.qBegin+self.gEnd-self.qBegin)/self.batch_size)
+      return int((self.qEnd-self.qBegin+self.gEnd-self.gBegin)/self.batch_size)
   def next(self):
     if self.endfile==0:
       arnum=self.arnum
@@ -169,12 +173,8 @@ class wkiter(mx.io.DataIter):
         rand=0.4
       if(self.friend!=0 and self.zboson==0 and self.istrain==0):
         rand=0.31354286
-      if(self.friend!=0 and self.zboson==1):
-        rand=0.526
-      if(self.friend!=0 and self.zboson==0 and self.istrain==1 and self.w==1):
-        rand=0.37
-      if(self.friend!=0 and self.zboson==0 and self.istrain==0 and self.w==1):
-        rand=0.6
+      if(self.friend!=0):
+        rand=self.gnum/1./(self.qnum+self.gnum)
       for i in range(self.batch_size):
         if(self.friend!=0):
           if(self.w==0):
