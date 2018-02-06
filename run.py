@@ -71,8 +71,8 @@ args.units=[eval(i) for i in args.units.split(",")]
 
 
 train_iter=wkiter(["data/train"+args.left+str(int(args.rat*100))+"img.root","data/train"+args.right+str(int(args.rat*100))+"img.root"],batch_size=args.batch_size,end=args.end,istrain=1,friend=0)
-if(args.ztest==1):test_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_sum_img.root","data/mg5_pp_zg_passed_pt_100_500_sum_img.root"],batch_size=args.batch_size,begin=5./7.,end=5./7.+args.end*2./7.,istrain=0,friend=0)
-else:test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_sum_img.root","data/mg5_pp_gg_balanced_pt_100_500_sum_img.root"],batch_size=args.batch_size,begin=5./7.,end=5./7.+args.end*2./7.,istrain=0,friend=0)
+zjettest_iter=wkiter(["data/ppzq_img.root","data/ppzg_img.root"],batch_size=args.batch_size,begin=4./5.,end=4./5.+args.end*1./5.,istrain=0,friend=0)
+dijettest_iter=wkiter(["data/ppqq_img.root","data/ppgg_img.root"],batch_size=args.batch_size,begin=4./5.,end=4./5.+args.end*1./5.,istrain=0,friend=0)
 savename="save/"+args.save+str(args.rat)
 #savename="save/"+args.save+str(args.rat)+"_"+str(start.date())
 #savename="save/"+args.save+str(args.rat)+"_"+args.network+"_"+str(start.date())
@@ -115,25 +115,32 @@ argu.write(str(args))
 argu.close()
 print train_iter.totalnum(),"batches"
 model.fit(train_iter,
-                eval_data=test_iter,
+                eval_datalist=[dijettest_iter,zjettest_iter],
                 initializer=init, 
                 optimizer=args.optimizer,
-                eval_metric=['accuracy'] if args.network!="dense" else ['acc',mx.metric.create('top_k_accuracy',top_k=5)],
+                eval_metric=['accuracy','crossentropy'] if args.network!="dense" else ['acc',mx.metric.create('top_k_accuracy',top_k=5)],
                 batch_end_callback =
                 [mx.callback.Speedometer(args.batch_size,train_iter.totalnum()/2+1)],
                 epoch_end_callback=mx.callback.do_checkpoint(savename+'/_'),
                 num_epoch=args.num_epochs)
 #lenet_model.save_checkpoint(prefix='jeti1_1',epoch=10)
 
-acc=0
+dijetacc=0
+zjetacc=0
 for line in reversed(open(savename+"/log.log").readlines()):
-  indx=line.find("Validation-accuracy")
+  indx=line.find("Validation1-accuracy")
   if(indx!=-1):
-    accbuf=eval(line[indx+20:])
-    if(acc<accbuf):
-      acc=accbuf
-      epoch=eval(line[line.find("Epoch")+6:line.find("Validation")-2])+1
+    accbuf=eval(line[indx+21:])
+    if(dijetacc<accbuf):
+      dijetacc=accbuf
+      dijetepoch=eval(line[line.find("Epoch")+6:line.find("Validation1-ac")-2])+1
+  indx=line.find("Validation2-accuracy")
+  if(indx!=-1):
+    accbuf=eval(line[indx+21:])
+    if(zjetacc<accbuf):
+      zjetacc=accbuf
+      zjetepoch=eval(line[line.find("Epoch")+6:line.find("Validation2-ac")-2])+1
 for i in range(args.num_epochs):
-  if(i+1!=epoch):subprocess.call("rm "+savename+'/_-{0:04d}'.format(i+1)+".params",shell=True)
+  if(i+1!=dijetepoch and i+1!=zjetepoch):subprocess.call("rm "+savename+'/_-{0:04d}'.format(i+1)+".params",shell=True)
 
 print datetime.datetime.now()-start

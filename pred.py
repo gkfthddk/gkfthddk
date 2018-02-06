@@ -14,7 +14,6 @@ parser.add_argument("--begin",type=float,default=0.,help='begin of training must
 parser.add_argument("--end",type=float,default=1.,help='end of training must begin<end')
 parser.add_argument("--rat",type=str,default="0.7",help='ratio for qg batch')
 parser.add_argument("--date",type=str,default="",help='produced date')
-parser.add_argument("--batch_size",type=int,default=500,help='the number of each batch')
 parser.add_argument("--entries",type=int,default=2,help='the number to take batches -1 is get all data')
 
 parser.add_argument("--epoch",type=str,default="0",help='check point number')
@@ -22,8 +21,8 @@ parser.add_argument("--load",type=str,default=1,help='loadname')
 parser.add_argument("--save",type=str,default=1,help='savename')
 parser.add_argument("--ztest",type=int,default=0,help='check point number')
 parser.add_argument("--wtest",type=int,default=0,help='check point number')
-parser.add_argument("--left",type=str,default="qq",help='left test')
-parser.add_argument("--right",type=str,default="gg",help='right test')
+parser.add_argument("--left",type=str,default="qq100",help='left test')
+parser.add_argument("--right",type=str,default="gg100",help='right test')
 
 parser.add_argument("--test",type=str,default="3",help='1 output 2 roc')
 fit.add_fit_args(parser)
@@ -36,7 +35,7 @@ parser.set_defaults(
     num_classes = 2,
     image_shape = '3,33,33',
     pad_size=4,
-    batch_size = 100,
+    batch_size = 500,
     disp_batched = 99,
     num_epochs = 20,
     lr = .05,
@@ -85,18 +84,26 @@ for i in range(len(rat)):
 
 for d in range(len(rat)):
   savename="save/"+args.load+str(rat[d])+"/"+args.save
-  if(args.ztest==1):test_iter=wkiter(["data/mg5_pp_zq_passed_pt_100_500_sum_img.root","data/mg5_pp_zg_passed_pt_100_500_sum_img.root"],batch_size=args.batch_size,begin=5./7.,end=5./7.+args.end*2./7.,istrain=0,friend=0,test=1)
-  else:test_iter=wkiter(["data/mg5_pp_qq_balanced_pt_100_500_sum_img.root","data/mg5_pp_gg_balanced_pt_100_500_sum_img.root"],batch_size=args.batch_size,begin=5./7.,end=5./7.+args.end*2./7.,istrain=0,friend=0,test=1)
+  if(args.ztest==1):test_iter=wkiter(["data/ppzq_img.root","data/ppzg_img.root"],batch_size=args.batch_size,begin=3./5.,end=3./5.+args.end*1./5.,istrain=0,friend=0,test=1)
+  else:test_iter=wkiter(["data/ppqq_img.root","data/ppgg_img.root"],batch_size=args.batch_size,begin=3./5.,end=3./5.+args.end*1./5.,istrain=0,friend=0,test=1)
   if(args.wtest==1):test_iter=wkiter(["data/test"+args.left+"img.root","data/test"+args.right+"img.root"],batch_size=args.batch_size,end=args.end,istrain=1,friend=0)
   if(epoch[d]==0):
     acc=0
     for line in reversed(open("save/"+args.load+str(rat[d])+"/log.log").readlines()):
-      indx=line.find("Validation-accuracy")
-      if(indx!=-1):
-        accbuf=eval(line[indx+20:])
-        if(acc<accbuf):
-          acc=accbuf
-          epoch[d]=eval(line[line.find("Epoch")+6:line.find("Validation")-2])+1
+      if(args.ztest==0):
+        indx=line.find("Validation1-accuracy")
+        if(indx!=-1):
+          accbuf=eval(line[indx+21:])
+          if(acc<accbuf):
+            acc=accbuf
+            epoch[d]=eval(line[line.find("Epoch")+6:line.find("Validation1-ac")-2])+1
+      else:
+        indx=line.find("Validation2-accuracy")
+        if(indx!=-1):
+          accbuf=eval(line[indx+21:])
+          if(acc<accbuf):
+            acc=accbuf
+            epoch[d]=eval(line[line.find("Epoch")+6:line.find("Validation2-ac")-2])+1
 
   sym,arg_params,aux_params=mx.model.load_checkpoint("save/"+args.load+str(rat[d])+"/_",epoch[d])
   #sym,arg_params,aux_params=mx.model.load_checkpoint("save/"+args.load+str(rat[d])+"_"+date[d]+"/_",epoch[d])
@@ -121,7 +128,7 @@ for d in range(len(rat)):
   entries=args.entries
   start=datetime.datetime.now()
   buftime=datetime.datetime.now()
-  print test_iter.totalnum(),entries
+  print epoch[d],entries,"/",test_iter.totalnum()
 
   from sklearn.metrics import roc_auc_score, auc,precision_recall_curve,roc_curve,average_precision_score
 
