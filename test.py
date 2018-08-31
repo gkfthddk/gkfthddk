@@ -1,24 +1,31 @@
+from iter import *
 import mxnet as mx
-import ROOT as rt
 import numpy as np
-import math
+import random
 import datetime
-import sys
+import argparse
+import matplotlib.pyplot as plt
+from common import fit,data
+from sklearn.model_selection import train_test_split
+from importlib import import_module
+import ROOT
+#python sumpredict.py --network "vgg,*,*,*" --date "2017-09-21,*,*,*" --rat "0.6,0.7,0.8,0.9" --epoch "18,18,17,16" --gpus "1" --save "firsttest"
 start=datetime.datetime.now()
-buftime=datetime.datetime.now()
-print("< - - - - - - - - - - >")
-entries=10000000
-for ent in range(entries):
-    if(ent%int(entries/999)==0 and ent!=0):
-        sys.stdout.write("\r%0.2f%%\t time remain %s\t" %
-        (float(100.*ent/entries),str(int(1000.-1000.*ent/entries)*(datetime.datetime.now()-buftime))))
-	sys.stdout.flush()
-        buftime=datetime.datetime.now()
-	#print datetime.datetime.now()
-    #if ent>1000:
-    #    break
-#labels=np.array(labels)
-#jetset=np.array(jetset,dtype=np.uint8)
-#data=jetset.reshape((len(jetset),3*33*33))
-print("<>")
-print(datetime.datetime.now()-start)
+qfile=ROOT.TFile("data/ppzq_img.root",'read')
+gfile=ROOT.TFile("data/ppzg_img.root",'read')
+ifile=ROOT.TFile("zqzg.root",'read')
+qjet=qfile.Get("image")
+gjet=gfile.Get("image")
+qout=ifile.Get("qout")
+gout=ifile.Get("gout")
+
+for i in range(qjet.GetEntries()):
+
+  qjet.GetEntry(i)
+  qout.GetEntry(i)
+  if(qjet.pt!=qout.pt):
+    
+    print("entry {}  in {} out {}".format(i,qjet.pt,qout.pt))
+    
+    break
+

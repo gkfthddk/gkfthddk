@@ -70,9 +70,10 @@ rootdata=args.rootdata.split(",")
 args.units=[eval(i) for i in args.units.split(",")]
 
 
-train_iter=wkiter(["data/train"+args.left+str(int(args.rat*100))+"img.root","data/train"+args.right+str(int(args.rat*100))+"img.root"],batch_size=args.batch_size,end=args.end,istrain=1,friend=0)
-zjettest_iter=wkiter(["data/ppzq_img.root","data/ppzg_img.root"],batch_size=args.batch_size,begin=4./5.,end=4./5.+args.end*1./5.,istrain=0,friend=0)
-dijettest_iter=wkiter(["data/ppqq_img.root","data/ppgg_img.root"],batch_size=args.batch_size,begin=4./5.,end=4./5.+args.end*1./5.,istrain=0,friend=0)
+#train_iter=wkiter(["data/train"+args.left+str(int(args.rat*100))+"img.root","data/train"+args.right+str(int(args.rat*100))+"img.root"],batch_size=args.batch_size,end=args.end,istrain=1,friend=0)
+train_iter=wkiter(["data/pp{}_1000_2000_img.root".format(args.left),"data/pp{}_1000_2000_img.root".format(args.right)],batch_size=args.batch_size,begin=0./5.,end=0./5.+args.end*3./5.,istrain=1,friend=0)
+zjettest_iter=wkiter(["data/ppzq_1000_2000_img.root","data/ppzg_1000_2000_img.root"],batch_size=args.batch_size,begin=4./5.,end=4./5.+args.end*1./5.,istrain=0,friend=0)
+dijettest_iter=wkiter(["data/ppqq_1000_2000_img.root","data/ppgg_1000_2000_img.root"],batch_size=args.batch_size,begin=4./5.,end=4./5.+args.end*1./5.,istrain=0,friend=0)
 savename="save/"+args.save+str(args.rat)
 #savename="save/"+args.save+str(args.rat)+"_"+str(start.date())
 #savename="save/"+args.save+str(args.rat)+"_"+args.network+"_"+str(start.date())
@@ -127,7 +128,6 @@ model.fit(train_iter,
 
 dijetacc=0
 zjetacc=0
-dijetepoch=0
 for line in reversed(open(savename+"/log.log").readlines()):
   indx=line.find("Validation1-accuracy")
   if(indx!=-1):

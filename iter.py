@@ -99,6 +99,14 @@ class wkiter(mx.io.DataIter):
     return self.Entries
   def trainnum(self):
     return self.End-self.Begin
+  def sumnum(self):
+    if(self.friend!=0):  
+      #a=0
+      #for i in range(self.friend):
+      #  a+=self.qEnd[i]-self.qBegin[i]+self.gEnd[i]-self.qBegin[i]
+      return int((self.qnum+self.gnum))
+    else:
+      return int((self.qEnd-self.qBegin+self.gEnd-self.gBegin))
   def totalnum(self):
     if(self.friend!=0):  
       #a=0
