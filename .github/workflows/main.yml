@@ -6,7 +6,7 @@ on:
 jobs:
   pull_request_comment:
     runs-on: [ubuntu-latest]
-    if: github.event.issue.pull_request && contains(github.event.comment.body, 'release')
+    if: contains(github.event.comment.body, 'release')
     steps:
       - name: Add comment
         if: contains(github.event.comment.body, 'release')   # check the comment if it contains the keywords
