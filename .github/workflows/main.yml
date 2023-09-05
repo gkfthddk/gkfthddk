@@ -6,7 +6,6 @@ on:
 jobs:
   pull_request_comment:
     runs-on: [ubuntu-latest]
-    if: contains(github.event.comment.body, 'release')
     steps:
       - name: Add comment
         if: contains(github.event.comment.body, 'release')   # check the comment if it contains the keywords
@@ -24,3 +23,14 @@ jobs:
         if: contains(github.event.comment.body, '/test')  # check the comment if it contains the keywords
         run: |
          echo start test
+      - name: Labeling
+        if: contains(github.event.comment.body, 'label')   # check the comment if it contains the keywords
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['This is bot label']
+            })
