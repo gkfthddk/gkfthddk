@@ -21,8 +21,11 @@ jobs:
             })
       - name: Test
         if: contains(github.event.comment.body, '/test')  # check the comment if it contains the keywords
+        env:
+          t0_secret: ${{ secrets.T0BOT_TOKEN }}
         run: |
          echo start test
+         curl -I "https://cmssdt.cern.ch/dmwm-jenkins/job/DMWM-T0-bot/build?token=$t0_secret"
       - name: Labeling
         if: contains(github.event.comment.body, 'label')   # check the comment if it contains the keywords
         uses: actions/github-script@v6
